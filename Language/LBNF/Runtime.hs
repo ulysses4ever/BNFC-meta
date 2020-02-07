@@ -27,7 +27,7 @@ module Language.LBNF.Runtime(
 
 import Control.Monad (MonadPlus(..), liftM, foldM, (>=>), ap)
 import Control.Applicative ( Applicative(..) )
-
+import qualified Control.Monad.Fail as Fail
 
 import Data.Char
 
@@ -43,9 +43,11 @@ data ParseMonad a = Ok a | Bad String
 
 instance Monad ParseMonad where
   return      = Ok
-  fail        = Bad
   Ok a  >>= f = f a
   Bad s >>= f = Bad s
+
+instance Fail.MonadFail ParseMonad where
+  fail        = Bad
 
 instance Functor ParseMonad where
   fmap = liftM
