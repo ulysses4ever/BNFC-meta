@@ -1,5 +1,5 @@
 Name:	        BNFC-meta
-version:        0.5
+version:        0.6
 cabal-Version:  >= 1.6
 build-type:     Simple
 license:        GPL-2
@@ -37,11 +37,16 @@ extra-source-files:
   examples/typesafe/Typesafe.hs
   Bootstrap/Bootstrap.hs
 
+source-repository head
+  type:      git
+  location:  https://github.com/JonasDuregard/BNFC-meta
+
+
 Library
   Build-Depends: 
     base>=4.2&&<5
     , array>=0.4&&<0.6
-    , template-haskell >=2.11 && < 2.13
+    , template-haskell >=2.12 && < 2.13
     , haskell-src-meta >= 0.5 && < 1.0
     , happy-meta >= 0.2.0.4 && < 0.3
     , alex-meta >= 0.3.0.5 && < 0.4

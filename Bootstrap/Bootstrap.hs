@@ -26,7 +26,7 @@ import Control.Monad(when)
 import System.FilePath
 
 -- This was required for some reason but I don't recall why /Jonas
-package = "BNFC-meta-0.2.1"
+package = "BNFC-meta-0.6"
 
 nfile = file ++ ".new.bak"
 file = ".." </> "Language" </> "LBNF" </> "Grammar.hs"
