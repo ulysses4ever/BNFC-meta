@@ -1,12 +1,11 @@
 Name:	        BNFC-meta
 version:        0.6.1
-x-revision: 1
 cabal-Version:  >= 1.6
 build-type:     Simple
 license:        GPL-2
 license-file:   LICENSE
 author:		    Jonas Duregård
-maintainer:     Artem Pelenitsyn <artem.pelenitsyn@gmail.com>
+maintainer:     artem.pelenitsyn@gmail.com
 category:	    Development, parsing, text, language
 synopsis:	    Deriving Parsers and Quasi-Quoters from BNF Grammars
 description:    This package provides a very simple way of defining a compiler   
@@ -41,25 +40,26 @@ extra-source-files:
 source-repository head
   type:      git
   location:  https://github.com/ulysses4ever/BNFC-meta
+  subdir:    BNFS-meta
 
 
 Library
   Build-Depends: 
-    base>=4.2&&<5
-    , array>=0.4&&<0.6
-    , fail >=4.9&&<5
-    , template-haskell >=2.12 && < 2.18
+      base  >=4.2 && <5
+    , array >=0.4 && <0.6
+    , fail  >=4.9 && <5
+    , template-haskell >=2.12 && < 2.20
     , haskell-src-meta >= 0.5 && < 1.0
     , happy-meta >= 0.2.0.4 && < 0.3
     , alex-meta >= 0.3.0.5 && < 0.4
     , syb >= 0.2 && <1.0
   Exposed-modules:
-    Language.LBNF
+      Language.LBNF
     , Language.LBNF.Runtime
     , Language.LBNF.Compiletime
     , Language.LBNF.Grammar
   Other-modules:
-    Language.LBNF.CF
+      Language.LBNF.CF
     , Language.LBNF.CFtoAbstract
     , Language.LBNF.CFtoAlex2
     , Language.LBNF.CFtoHappy 
