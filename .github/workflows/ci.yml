@@ -1,0 +1,42 @@
+on: push
+jobs:
+  build:
+    strategy:
+      matrix:
+        ghc: ["9.4.2", "9.2.4"]
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Setup ghcup on Linux / MacOS
+        run: curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | BOOTSTRAP_HASKELL_NONINTERACTIVE=1 BOOTSTRAP_HASKELL_MINIMAL=1 sh
+      - name: Select GHC
+        run: |
+          ghcup install ghc --set ${{ matrix.ghc }}
+      - uses: actions/checkout@v3
+      - name: Build All
+        run: |
+          cabal --version
+          cabal update
+          cabal build all
+
+  build-windows:
+    strategy:
+      matrix:
+        ghc: ["9.4.2"]
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Setup ghcup on Windows
+        run: Set-ExecutionPolicy Bypass -Scope Process -Force;[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072;Invoke-Command -ScriptBlock ([ScriptBlock]::Create((Invoke-WebRequest https://www.haskell.org/ghcup/sh/bootstrap-haskell.ps1 -UseBasicParsing))) -ArgumentList $false,$true,$true,$false,$false,$false,$false,"C:\"
+      - name: Select GHC
+        run: |
+          ghcup install ghc --set ${{ matrix.ghc }}
+          ghcup install cabal --set 3.8.1.0
+      - uses: actions/checkout@v3
+      - name: Build All
+        run: |
+          cabal --version
+          cabal update
+          cabal build all

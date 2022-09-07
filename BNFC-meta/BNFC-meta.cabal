@@ -1,6 +1,6 @@
 Name:	        BNFC-meta
 version:        0.6.1
-cabal-Version:  >= 1.6
+cabal-Version:  >= 1.18
 build-type:     Simple
 license:        GPL-2
 license-file:   LICENSE

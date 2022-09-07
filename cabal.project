@@ -1,1 +1,4 @@
 packages: BNFC-meta alex-meta happy-meta
+
+allow-newer:
+    haskell-src-meta:template-haskell

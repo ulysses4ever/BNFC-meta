@@ -9,7 +9,7 @@ Maintainer:          artem.pelenitsyn@gmail.com
 Category:            Development
 Build-type:          Simple
 Description:         A Template-Haskell based version of the Alex lexer generator. It is used by BNFC-meta to generate lexers and currently this is the only feature known to be working.
-Cabal-version:       >=1.10
+Cabal-version:       >=1.18
 Extra-Doc-Files:     changelog.md
 
 
