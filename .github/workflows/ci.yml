@@ -1,20 +1,28 @@
+name: CI
 on: push
 jobs:
   build:
     strategy:
       matrix:
-        ghc: ["9.4.4", "9.2.6", "8.10.7"]
+        ghc: ["9.6.0.20230210", "9.4.4", "9.2.6", "8.10.7"]
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Select GHC, update cabal
         run: |
+          ghcup upgrade
+          ghcup config set cache true
+          ghcup config add-release-channel https://raw.githubusercontent.com/haskell/ghcup-metadata/master/ghcup-prereleases-0.0.7.yaml
           ghcup install ghc --set ${{ matrix.ghc }}
+          ghcup install cabal --set latest
           ghc --version
           cabal --version
-          cabal update
+
       - uses: actions/checkout@v3
       - name: Build All
         run: |
+          # add head.hackage: needed for the prereleased GHC
+          curl https://ghc.gitlab.haskell.org/head.hackage/cabal.project >> cabal.project.local
+          cabal update
           cabal build all
           cabal test all
