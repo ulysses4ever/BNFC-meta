@@ -23,7 +23,7 @@ Library
     Text.Happy.Quote
 
   Build-depends:
-      template-haskell >=2.4 && <2.20
+      template-haskell >=2.4 && <3
     , haskell-src-meta >=0.5.1.2 && <1.0
     , base >= 4.2 && < 5
     , array, containers
