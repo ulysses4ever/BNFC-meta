@@ -41,6 +41,7 @@
 > import Data.Maybe (fromMaybe)
 
 
+> import Control.Monad (when)
 > import Control.Monad.Writer
 
 
