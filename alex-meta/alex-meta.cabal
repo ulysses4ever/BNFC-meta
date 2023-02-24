@@ -24,7 +24,7 @@ Library
     Text.Alex.AlexTemplate
   
   Build-depends:
-      template-haskell >=2.5 && <2.20
+      template-haskell >=2.5 && <3
     , haskell-src-meta >=0.5.1.2 && <1.0
     , base >= 4.2 && < 5
     , array, containers
