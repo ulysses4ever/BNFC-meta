@@ -1,16 +1,17 @@
+Cabal-version:       1.18
 Name:                happy-meta
-Version:             0.2.0.11
+Version:             0.2.1.0
 Synopsis:            Quasi-quoter for Happy parsers
 -- Description:         
 License:             BSD3
 License-file:        LICENSE
 Author:              Jonas Duregard
-Maintainer:          artem.pelenitsyn@gmail.com
+Maintainer:          Artem Pelenitsyn (a.pelenitsyn@gmail.com)
+Homepage:            https://github.com/ulysses4ever/BNFC-meta
 Category:            Development
 Build-type:          Simple
 Description:         A Template-Haskell based version of the Happy parser generator. Used to generate parsers for BNFC-meta, currently this is the only use known to be working.
 
-Cabal-version:       >=1.18
 Extra-Doc-Files:     changelog.md
 
 
