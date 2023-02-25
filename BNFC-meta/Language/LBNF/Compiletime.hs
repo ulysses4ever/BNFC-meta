@@ -1,10 +1,10 @@
 {-#LANGUAGE TemplateHaskell#-}
 {-# OPTIONS_GHC -fno-warn-missing-fields #-}
 -- | Contains things needed by BNFC-meta language definitions and
--- by the code generated from those. Typical users don't need to browse this 
+-- by the code generated from those. Typical users don't need to browse this
 -- module.
 module Language.LBNF.Compiletime(
-  -- * Happy and Alex 
+  -- * Happy and Alex
   HappyStk(..)
   , utf8Encode
   , Posn(Pn)
@@ -13,9 +13,9 @@ module Language.LBNF.Compiletime(
   , ord
   , listArray
   , (!)
-  , Array  
+  , Array
 
-  -- * Pretty printing 
+  -- * Pretty printing
   , printTree
   , doc
   , concatD
@@ -23,7 +23,7 @@ module Language.LBNF.Compiletime(
   , prPrec
   , PrintPlain(..)
 
-  -- * Quasi quoting 
+  -- * Quasi quoting
   , parseToQuoter, parseToMonQuoter
   , ParseMonad(..)
   , errq
@@ -36,7 +36,7 @@ module Language.LBNF.Compiletime(
   -- ** Helper functions for defining Anti-quotation
   , printAq
   , stringAq
-  
+
   ) where
 
 import Language.LBNF.Runtime
@@ -69,7 +69,7 @@ alexMove (Pn a l c) _    = Pn (a+1)  l     (c+1)
 alexGetByte :: AlexInput -> Maybe (Word8,AlexInput)
 alexGetByte (p,c,(b:bs),s) = Just (b,(p,c,bs,s))
 alexGetByte (p,c,[],[]) = Nothing
-alexGetByte (p,_,[],(c:s))  = let p' = alexMove p c 
+alexGetByte (p,_,[],(c:s))  = let p' = alexMove p c
                                   (b:bs) = utf8Encode c
                               in p' `seq`  Just (b, (p', c, bs, s))
 
@@ -98,8 +98,8 @@ utf8Encode = map fromIntegral . go . ord
 -- import qualified Language.Haskell.Exts.Parser as Hs
 
 
-data BNFC_QQType = 
-  QQApp (String,LocType) [BNFC_QQType] | 
+data BNFC_QQType =
+  QQApp (String,LocType) [BNFC_QQType] |
   QQAq (Q Exp, Q Pat) |
   QQList [BNFC_QQType] |
   QQLit Lit |
@@ -125,7 +125,7 @@ appEPAllL loc l = QQList l
 
 class Literal a where
   lit :: a -> Lit
-  
+
 instance Literal Double where
   lit = RationalL . toRational
 
@@ -152,7 +152,7 @@ fromString l s = fromLit l s -- (litE $ StringL s,litP $ StringL s)
 
 fromToken l t s = QQApp (t,l) [QQLit $ lit s]
 --    (
---    appE (mkGName l t >>= conE)(litE $ StringL s), 
+--    appE (mkGName l t >>= conE)(litE $ StringL s),
 --    mkGName l t >>= flip conP [litP $ StringL s]
 --    )
 
@@ -167,12 +167,12 @@ qualify m  f     = m ++ "." ++ f
 
 -- Dynamic names
 -- mkGName :: LocType -> String -> Q Name
--- mkGName (p,m) s = return $ mkName $ qualify m s 
+-- mkGName (p,m) s = return $ mkName $ qualify m s
 
 -- Static names
 mkGName (p,m) ":" = return $ mkName ":"
 mkGName (p,m) "[]" = return $ mkName "[]"
-mkGName (p,m) n = return $ Name (mkOccName n) $ 
+mkGName (p,m) n = return $ Name (mkOccName n) $
     NameG DataName (mkPkgName $ p) (mkModName $ m)
 
 
@@ -193,8 +193,8 @@ parseToMonQuoter p = QuasiQuoter {
 
 toQExp :: BNFC_QQType -> Q Exp
 toQExp qq = case qq of
-  QQApp (s,l) qs         -> do 
-    const <- mkGName l s 
+  QQApp (s,l) qs         -> do
+    const <- mkGName l s
     foldl appE (conE const) (map toQExp qs)
   QQAq p                 -> fst p
   QQList qs              -> mapM toQExp qs >>= \qs' -> case qs' of
@@ -203,13 +203,13 @@ toQExp qq = case qq of
     a                      -> listE $ map return a
   QQLit l                -> litE l
   QQPosT pos (t,l) s     -> do
-    constr <- mkGName l t 
+    constr <- mkGName l t
     appE (conE constr) (lift (pos,s))
 
 toQMExp :: BNFC_QQType -> Q Exp
 toQMExp qq = case qq of
-  QQApp (s,l) qs         -> do 
-    const <- mkGName l s 
+  QQApp (s,l) qs         -> do
+    const <- mkGName l s
     foldl mAppE (returnE $ conE const) (map toQMExp qs)
   QQAq p                 -> fst p
   QQList qs              -> mapM toQMExp qs >>= \qs' -> case qs' of
@@ -218,7 +218,7 @@ toQMExp qq = case qq of
     a                      -> sequenceE $ listE $ map return a
   QQLit l                -> returnE $ litE l
   QQPosT pos (t,l) s     -> do
-    constr <- mkGName l t 
+    constr <- mkGName l t
     returnE $ appE (conE constr) (lift (pos,s))
 
 returnE = appE (varE 'return)
@@ -232,15 +232,15 @@ mAppE mf ma = [| $mf >>= flip liftM $ma |]
 
 toQPat :: BNFC_QQType -> Q Pat
 toQPat qq = case qq of
-  QQApp (s,l) qs         -> do 
-    const <- mkGName l s 
+  QQApp (s,l) qs         -> do
+    const <- mkGName l s
     conP const (map toQPat qs)
   QQAq p                 -> snd p
   QQList qs              -> mapM toQPat qs >>= \qs' -> case qs' of
     [p,ListP ps]           -> listP $ map return $ p : ps
-    [x]                    -> listP [return x] 
+    [x]                    -> listP [return x]
   QQLit l                -> litP l
-  QQPosT (p1,p2) (t,l) s -> mkGName l t >>= flip conP 
+  QQPosT (p1,p2) (t,l) s -> mkGName l t >>= flip conP
       [tupP [
         tupP [litP $ IntegerL $ toInteger p1, litP $ IntegerL $ toInteger p2],
         litP (lit s)
@@ -253,7 +253,7 @@ printAq a = stringAq $ printTree a
 
 stringAq :: String -> BNFC_QQType
 stringAq s = QQAq (
-  either error return . parseExp $ s, 
+  either error return . parseExp $ s,
   either error return . parsePat $ s)
 
 
@@ -261,4 +261,3 @@ handle :: ParseMonad BNFC_QQType -> Q BNFC_QQType
 handle (Bad s) = fail s
 handle (Ok a)  = return a
 
-  

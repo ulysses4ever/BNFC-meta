@@ -53,7 +53,7 @@ lit x (c:cs) = [(x,cs) | x == c]
 lit _ _ = []
 
 (***) :: Parser a b -> (b -> c) -> Parser a c
-(p *** f) s = [(f x,r) | (x,r) <- p s] 
+(p *** f) s = [(f x,r) | (x,r) <- p s]
 
 succeed :: b -> Parser a b
 succeed v s = [(v,s)]
@@ -70,10 +70,10 @@ parseResults p s = [x | (x,r) <- p s, null r]
 -- * List utilities
 
 -- | Replace all occurences of a value by another value
-replace :: Eq a => 
-	   a -- ^ Value to replace 
-	-> a -- ^ Value to replace it with
-	-> [a] -> [a]
+replace :: Eq a =>
+           a -- ^ Value to replace
+        -> a -- ^ Value to replace it with
+        -> [a] -> [a]
 replace x y xs = [ if z == x then y else z | z <- xs]
 
 -- | Split a list on the first occurence of a value.
@@ -81,7 +81,7 @@ replace x y xs = [ if z == x then y else z | z <- xs]
 --   of the returned lists.
 split :: Eq a => a -> [a] -> ([a],[a])
 split x xs = let (ys, zs) = break (==x) xs
-		 in (ys, drop 1 zs)
+                 in (ys, drop 1 zs)
 
 -- | Split a list on every occurence of a value.
 --   If the value does not occur in the list,
@@ -90,9 +90,9 @@ split x xs = let (ys, zs) = break (==x) xs
 splitAll :: Eq a => a -> [a] -> [[a]]
 splitAll _ [] = [[]]
 splitAll x xs = let (ys, zs) = break (==x) xs
-		    in ys : case zs of
-				    [] -> []
-				    _:zs' -> splitAll x zs'
+                    in ys : case zs of
+                                    [] -> []
+                                    _:zs' -> splitAll x zs'
 
 
 pathSep :: Char
@@ -102,7 +102,7 @@ pathSep = '/'
 pathInits :: String -> [String]
 pathInits "" = []
 pathInits xs = let (ys,zs) = split pathSep xs
-		   in ys : map ((ys ++ [pathSep]) ++) (pathInits zs)
+                   in ys : map ((ys ++ [pathSep]) ++) (pathInits zs)
 
 -- | Like basename(1), remove all leading directories from a path name.
 basename :: String -> String

@@ -22,7 +22,7 @@
 -- Module      :  CFtoAlex2
 -- Copyright   :  (C)opyright 2003, {aarne,markus,peteg} at cs dot chalmers dot se
 -- License     :  GPL (see COPYING for details)
--- 
+--
 -- Maintainer  :  {markus,aarne} at cs dot chalmers dot se
 -- Stability   :  alpha
 -- Portability :  Haskell98
@@ -46,13 +46,13 @@ concreteAlex :: CF -> String
 concreteAlex = parseAlex . cf2alex2
 
 cf2alex2 ::CF -> String
-cf2alex2 cf = 
+cf2alex2 cf =
   unlines $ concat $ intersperse [""] [
     cMacros,
     rMacros cf,
     restOfAlex False cf
    ]
-   
+
 cMacros :: [String]
 cMacros = [
   "$l = [a-zA-Z\\192 - \\255] # [\\215 \\247]    -- isolatin1 letter FIXME",
@@ -64,7 +64,7 @@ cMacros = [
   ]
 
 rMacros :: CF -> [String]
-rMacros cf = 
+rMacros cf =
   let symbs = symbols cf
   in
   (if null symbs then [] else [
@@ -82,7 +82,7 @@ rMacros cf =
 
 restOfAlex :: Bool -> CF -> [String]
 restOfAlex shareStrings cf = [
-  ":-", 
+  ":-",
   lexComments (comments cf),
   "$white+ ;",
   pTSpec (symbols cf),
@@ -103,9 +103,9 @@ restOfAlex shareStrings cf = [
   "share :: String -> String",
   "share = " ++ if shareStrings then "shareString" else "id",
   "",
-  "data Tok =", 
+  "data Tok =",
   "   TS !String !Int    -- reserved words and symbols",
-  " | TL !String         -- string literals", 
+  " | TL !String         -- string literals",
   " | TI !String         -- integer literals",
   " | TV !String         -- identifiers",
   " | TD !String         -- double precision float literals",
@@ -118,20 +118,20 @@ restOfAlex shareStrings cf = [
   " | Err Posn",
   "  deriving (Eq,Show,Ord)",
   "",
-  "tokenPos (PT (Pn _ l _) _ :_) = \"line \" ++ show l", 
-  "tokenPos (Err (Pn _ l _) :_) = \"line \" ++ show l", 
+  "tokenPos (PT (Pn _ l _) _ :_) = \"line \" ++ show l",
+  "tokenPos (Err (Pn _ l _) :_) = \"line \" ++ show l",
   "tokenPos _ = \"end of file\"",
   "",
   "posLineCol (Pn _ l c) = (l,c)",
   "mkPosToken t@(PT p _) = (posLineCol p, prToken t)",
   "",
-  "prToken t = case t of", 
+  "prToken t = case t of",
   "  PT _ (TS s _) -> s",
   "  PT _ (TI s) -> s",
   "  PT _ (TV s) -> s",
   "  PT _ (TD s) -> s",
   "  PT _ (TC s) -> s",
-  userDefTokenPrint,  
+  userDefTokenPrint,
   "  _ -> show t",
   "",
   "data BTree = N | B String Tok BTree BTree deriving (Show)",
@@ -185,20 +185,20 @@ restOfAlex shareStrings cf = [
   ]
  where
    ifC cat s = if isUsedCat cf cat then s else ""
-   lexComments ([],[])           = []    
+   lexComments ([],[])           = []
    lexComments (xs,s1:ys) = '\"' : s1 ++ "\"" ++ " [.]* ; -- Toss single line comments\n" ++ lexComments (xs, ys)
    lexComments (([l1,l2],[r1,r2]):xs,[]) = concat $
-					[
-					('\"':l1:l2:"\" ([$u # \\"), -- FIXME quotes or escape?
-					(l2:"] | \\"),
-					(r1:" [$u # \\"),
-					(r2:"])* (\""),
-					(r1:"\")+ \""),
-					(r2:"\" ; \n"),
-					lexComments (xs, [])
-					]
-   lexComments ((_:xs),[]) = lexComments (xs,[]) 
----   lexComments (xs,(_:ys)) = lexComments (xs,ys) 
+                                        [
+                                        ('\"':l1:l2:"\" ([$u # \\"), -- FIXME quotes or escape?
+                                        (l2:"] | \\"),
+                                        (r1:" [$u # \\"),
+                                        (r2:"])* (\""),
+                                        (r1:"\")+ \""),
+                                        (r2:"\" ; \n"),
+                                        lexComments (xs, [])
+                                        ]
+   lexComments ((_:xs),[]) = lexComments (xs,[])
+---   lexComments (xs,(_:ys)) = lexComments (xs,ys)
 
    -- tokens consisting of special symbols
    pTSpec [] = ""
@@ -215,20 +215,20 @@ restOfAlex shareStrings cf = [
    toks = tokenPragmas cf ++ ruleTokens cf
 
    ident =
-     "$l $i*   { tok (\\p s -> PT p (eitherResIdent (TV . share) s)) }" 
-     --ifC "Ident"  "<ident>   ::= ^l ^i*   { ident  p = PT p . eitherResIdent TV }" 
+     "$l $i*   { tok (\\p s -> PT p (eitherResIdent (TV . share) s)) }"
+     --ifC "Ident"  "<ident>   ::= ^l ^i*   { ident  p = PT p . eitherResIdent TV }"
 
    resws = reservedWords cf ++ symbols cf
 
 
-data BTree = N | B String Int BTree BTree 
+data BTree = N | B String Int BTree BTree
 
 instance Show BTree where
     showsPrec _ N = showString "N"
     showsPrec n (B s k l r) = wrap (showString "b " . shows s  . showChar ' '. shows k  . showChar ' '
-				    . showsPrec 1 l . showChar ' '
-				    . showsPrec 1 r)
-	where wrap f = if n > 0 then showChar '(' . f . showChar ')' else f
+                                    . showsPrec 1 l . showChar ' '
+                                    . showsPrec 1 r)
+        where wrap f = if n > 0 then showChar '(' . f . showChar ')' else f
 
 sorted2tree :: [(String,Int)] -> BTree
 sorted2tree [] = N
@@ -252,18 +252,18 @@ printRegAlex = render . prt 0
 render :: [String] -> String
 render = rend 0
     where rend :: Int -> [String] -> String
-	  rend i ss = case ss of
-		        "["      :ts -> cons "["  $ rend i ts
-			"("      :ts -> cons "("  $ rend i ts
-			t  : "," :ts -> cons t    $ space "," $ rend i ts
-		        t  : ")" :ts -> cons t    $ cons ")"  $ rend i ts
-			t  : "]" :ts -> cons t    $ cons "]"  $ rend i ts
-			t        :ts -> space t   $ rend i ts
-			_            -> ""
+          rend i ss = case ss of
+                        "["      :ts -> cons "["  $ rend i ts
+                        "("      :ts -> cons "("  $ rend i ts
+                        t  : "," :ts -> cons t    $ space "," $ rend i ts
+                        t  : ")" :ts -> cons t    $ cons ")"  $ rend i ts
+                        t  : "]" :ts -> cons t    $ cons "]"  $ rend i ts
+                        t        :ts -> space t   $ rend i ts
+                        _            -> ""
 
-	  cons s t  = s ++ t
-	  new i s   = s
-	  space t s = if null s then t else t ++ " " ++ s
+          cons s t  = s ++ t
+          new i s   = s
+          space t s = if null s then t else t ++ " " ++ s
 
 parenth :: [String] -> [String]
 parenth ss = ["("] ++ ss ++ [")"]
@@ -304,5 +304,4 @@ instance Print Reg where
    RUpper  -> prPrec i 3 (concat [["$c"]])
    RLower  -> prPrec i 3 (concat [["$s"]])
    RAny  -> prPrec i 3 (concat [["$u"]])
-
 

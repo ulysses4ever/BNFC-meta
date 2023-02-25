@@ -41,4 +41,3 @@ TInt.     Typ  ::= "int" ;
 TDouble.  Typ  ::= "double" ;
 |]
 
-

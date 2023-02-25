@@ -88,5 +88,3 @@ split_rules rs = let (xs,ys) = partition has_args rs
                  in (M.fromList [ (x,r) | r@(x,_,_,_) <- xs ],ys)
   where has_args (_,xs,_,_) = not (null xs)
 
-
-

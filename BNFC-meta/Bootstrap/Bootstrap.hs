@@ -33,8 +33,8 @@ file = ".." </> "Language" </> "LBNF" </> "Grammar.hs"
 bfile = file ++ ".bak"
 bbfile = bfile ++ ".bak"
 
--- Running this code will generate a new LBNF quasi-quoter file using 
--- an existing installation of BNFC-meta. It's all very meta. 
+-- Running this code will generate a new LBNF quasi-quoter file using
+-- an existing installation of BNFC-meta. It's all very meta.
 main = do
   c <- getCode ("Language.LBNF.Grammar") g
   doesFileExist bfile >>= \b -> when b $ copyFile bfile bbfile
@@ -92,10 +92,10 @@ ListCat  . Cat1 ::= "[" Cat "]" ;
 IdCat    . Cat1 ::= Ident ;
 
 -- functional labels
-Id       . Label ::= Ident ; 
-Wild     . Label ::= "_" ; 
+Id       . Label ::= Ident ;
+Wild     . Label ::= "_" ;
 ListE    . Label ::= "[" "]" ;
-ListCons . Label ::= "(" ":" ")" ; 
+ListCons . Label ::= "(" ":" ")" ;
 ListOne  . Label ::= "(" ":" "[" "]" ")" ;
 Aq       . Label ::= "$" MIdent ;
 
@@ -107,7 +107,7 @@ NIdent   . MIdent ::= ;
 -- Pragmas
 Comment  .  Def ::= "comment" String ;
 Comments .  Def ::= "comment" String String ;
-Internal .  Def ::= "internal" Label "." Cat "::=" [Item] ; 
+Internal .  Def ::= "internal" Label "." Cat "::=" [Item] ;
 Token.      Def ::= "token" Ident Reg ;
 PosToken.   Def ::= "position" "token" Ident Reg ;
 Entryp.     Def ::= "entrypoints" [Ident] ;
@@ -138,14 +138,14 @@ Arg. Arg ::= Ident ;
 separator Arg "" ;
 
 -- Expressions
-Cons.	    Exp  ::= Exp1 ":" Exp ;
-App.	    Exp1 ::= Ident [Exp2] ;
-Var.	    Exp2 ::= Ident ;
-LitInt.	    Exp2 ::= Integer ;
+Cons.       Exp  ::= Exp1 ":" Exp ;
+App.        Exp1 ::= Ident [Exp2] ;
+Var.        Exp2 ::= Ident ;
+LitInt.     Exp2 ::= Integer ;
 LitChar.    Exp2 ::= Char ;
 LitString.  Exp2 ::= String ;
 LitDouble.  Exp2 ::= Double ;
-List.	    Exp2 ::= "[" [Exp] "]" ;
+List.       Exp2 ::= "[" [Exp] "]" ;
 
 
 coercions Exp 2;
@@ -190,5 +190,5 @@ _. Reg3 ::= "(" Reg ")" ;
 
 -- comments in BNF source
 comment "--" ;
-comment "{-" "-}" ; 
+comment "{-" "-}" ;
 |]

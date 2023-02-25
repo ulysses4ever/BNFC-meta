@@ -356,5 +356,3 @@ prop_intSingleton x y = forAll (rangeAround x y) $ \r ->
       rangeAround v1 v2 = return Range `ap` genBound v1 `ap` genBound v2
       genBound v = elements [BoundaryAbove v, BoundaryBelow v]
 
-
-

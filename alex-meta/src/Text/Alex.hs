@@ -1,5 +1,5 @@
 -- -----------------------------------------------------------------------------
--- 
+--
 -- Alex.hs, part of Alex
 --
 -- (c) Chris Dornan 1995-2000, Simon Marlow 2003
@@ -12,7 +12,7 @@ module Text.Alex (
   , alex
   , optsToInject
   , importsToInject
-  
+
   , parseScript, Target(..)
   ) where
 
@@ -43,7 +43,7 @@ parseScript :: Maybe FilePath -> String
 parseScript maybeFile prg =
   let file = maybe "<no file>" id maybeFile in
   case runP prg initialParserEnv parse of
-        Left (Just (AlexPn _ line col),err) -> 
+        Left (Just (AlexPn _ line col),err) ->
                 error (file ++ ":" ++ show line ++ ":" ++ show col
                                  ++ ": " ++ err ++ "\n")
         Left (Nothing, err) ->
@@ -57,10 +57,10 @@ alex :: [CLIFlags]
      -> (Maybe (AlexPosn, Code), [Directive], Scanner, Maybe (AlexPosn, Code))
      -> (String,String)
 alex cli script =
-  let 
+  let
     target = if OptGhcTarget `elem` cli then GhcTarget else HaskellTarget
     encoding
-      | OptLatin1 `elem` cli = Latin1   
+      | OptLatin1 `elem` cli = Latin1
       | otherwise            = UTF8
     (maybe_header, directives, scanner1, maybe_footer) = script
     (scanner2, scs, sc_hdr) = encodeStartCodes scanner1
@@ -69,8 +69,8 @@ alex cli script =
     min_dfa = minimizeDFA dfa
     nm  = scannerName scanner_final
   in
-   (maybe id ((++) . snd) (maybe_header) $ 
-     maybe id (flip (++) . snd) (maybe_footer) $ 
+   (maybe id ((++) . snd) (maybe_header) $
+     maybe id (flip (++) . snd) (maybe_footer) $
      outputDFA target 1 nm min_dfa "" ++ (actions "") ++ (sc_hdr "")
       ,(infoDFA 1 nm min_dfa ""))
 
@@ -113,7 +113,7 @@ import_glaexts = "#if __GLASGOW_HASKELL__ >= 503\n" ++
                  "import GlaExts\n" ++
                  "#endif\n"
 
-import_debug :: String 
+import_debug :: String
 import_debug   = "#if __GLASGOW_HASKELL__ >= 503\n" ++
                  "import System.IO\n" ++
                  "import System.IO.Unsafe\n" ++
@@ -129,7 +129,7 @@ initialParserEnv = (initSetEnv, initREEnv)
 initSetEnv :: Map String CharSet
 initSetEnv = Map.fromList [("white", charSet " \t\n\v\f\r"),
                            ("printable", charSetRange (chr 32) (chr 0x10FFFF)), -- FIXME: Look it up the unicode standard
-                           (".", charSetComplement emptyCharSet 
+                           (".", charSetComplement emptyCharSet
                             `charSetMinus` charSetSingleton '\n')]
 
 initREEnv :: Map String RExp
@@ -138,7 +138,7 @@ initREEnv = Map.empty
 -- -----------------------------------------------------------------------------
 -- Command-line flags
 
-data CLIFlags 
+data CLIFlags
   = OptDebugParser
   | OptGhcTarget
   | OptInfoFile (Maybe FilePath)

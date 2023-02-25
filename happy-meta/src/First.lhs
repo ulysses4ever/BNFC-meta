@@ -25,7 +25,7 @@
 
 
 > joinSymSets :: (a -> NameSet) -> [a] -> NameSet
-> joinSymSets f = foldr 
+> joinSymSets f = foldr
 >       (\ h b -> let
 >                   h' = f h
 >                 in
@@ -49,10 +49,10 @@
 
 > mkFirst :: Grammar -> [Name] -> NameSet
 > mkFirst (Grammar { first_term = fst_term
->		   , lookupProdNo = prodNo
->		   , lookupProdsOfName = prodsOfName
->		   , non_terminals = nts
->		   })
+>                  , lookupProdNo = prodNo
+>                  , lookupProdsOfName = prodsOfName
+>                  , non_terminals = nts
+>                  })
 >       = joinSymSets (\ h -> case lookup h env of
 >                               Nothing -> Set.singleton h
 >                               Just ix -> ix)
@@ -63,21 +63,21 @@
 
 > getNext :: Name -> (a -> (b, [Name], c, d)) -> (Name -> [a])
 >         -> [(Name, IntSet)] -> [(Name, NameSet)]
-> getNext fst_term prodNo prodsOfName env = 
->		[ (nm, next nm) | (nm,_) <- env ]
->    where 
->    	fn t | t == errorTok || t >= fst_term = Set.singleton t
->    	fn x = case lookup x env of
->           	        Just t -> t
+> getNext fst_term prodNo prodsOfName env =
+>               [ (nm, next nm) | (nm,_) <- env ]
+>    where
+>       fn t | t == errorTok || t >= fst_term = Set.singleton t
+>       fn x = case lookup x env of
+>                       Just t -> t
 >                       Nothing -> error "attempted FIRST(e) :-("
 
 
-> 	next :: Name -> NameSet
-> 	next t | t >= fst_term = Set.singleton t
-> 	next n = 
->       	foldb Set.union 
->               	[ joinSymSets fn (snd4 (prodNo rl)) | 
->				rl <- prodsOfName n ]
+>       next :: Name -> NameSet
+>       next t | t >= fst_term = Set.singleton t
+>       next n =
+>               foldb Set.union
+>                       [ joinSymSets fn (snd4 (prodNo rl)) |
+>                               rl <- prodsOfName n ]
 
 
 

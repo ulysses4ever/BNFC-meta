@@ -13,32 +13,32 @@
 > module GenUtils (
 
 
->       partition', tack, 
+>       partition', tack,
 >       assocMaybeErr,
 >       arrElem,
 >       memoise,
->	returnMaybe,handleMaybe, findJust,
+>       returnMaybe,handleMaybe, findJust,
 >       MaybeErr(..),
 >       mapMaybe,
 >       maybeMap,
 >       joinMaybe,
 >       mkClosure,
 >       foldb,
->	listArray',
+>       listArray',
 >       cjustify,
 >       ljustify,
 >       rjustify,
 >       space,
 >       copy,
->	combinePairs,
->	--trace,		-- re-export it 
->	fst3,
->	snd3,
->	thd3,
->	mapDollarDollar,
->	str, char, nl, brack, brack',
->	interleave, interleave',
->	strspace, maybestr
+>       combinePairs,
+>       --trace,                -- re-export it
+>       fst3,
+>       snd3,
+>       thd3,
+>       mapDollarDollar,
+>       str, char, nl, brack, brack',
+>       interleave, interleave',
+>       strspace, maybestr
 >        ) where
 
 
@@ -70,7 +70,7 @@
 > maybeMap _ Nothing  = Nothing
 
 
-> joinMaybe :: (a -> a -> a) -> Maybe a -> Maybe a -> Maybe a 
+> joinMaybe :: (a -> a -> a) -> Maybe a -> Maybe a -> Maybe a
 > joinMaybe _ Nothing  Nothing  = Nothing
 > joinMaybe _ (Just g) Nothing  = Just g
 > joinMaybe _ Nothing  (Just g) = Just g
@@ -100,7 +100,7 @@
 > foldb _ [] = error "can't reduce an empty list using foldb"
 > foldb _ [x] = x
 > foldb f l  = foldb f (foldb' l)
->    where 
+>    where
 >       foldb' (x:y:x':y':xs) = f (f x y) (f x' y') : foldb' xs
 >       foldb' (x:y:xs) = f x y : foldb' xs
 >       foldb' xs = xs
@@ -153,9 +153,9 @@
 > partition' :: (Eq b) => (a -> b) -> [a] -> [[a]]
 > partition' _ [] = []
 > partition' _ [x] = [[x]]
-> partition' f (x:x':xs) | f x == f x' 
+> partition' f (x:x':xs) | f x == f x'
 >    = tack x (partition' f (x':xs))
->                       | otherwise 
+>                       | otherwise
 >    = [x] : partition' f (x':xs)
 
 
@@ -164,20 +164,20 @@
 
 
 > combinePairs :: (Ord a) => [(a,b)] -> [(a,[b])]
-> combinePairs xs = 
->	combine [ (a,[b]) | (a,b) <- sortBy (\ (a,_) (b,_) -> compare a b) xs]
+> combinePairs xs =
+>       combine [ (a,[b]) | (a,b) <- sortBy (\ (a,_) (b,_) -> compare a b) xs]
 >  where
->	combine [] = []
->	combine ((a,b):(c,d):r) | a == c = combine ((a,b++d) : r)
->	combine (a:r) = a : combine r
-> 
+>       combine [] = []
+>       combine ((a,b):(c,d):r) | a == c = combine ((a,b++d) : r)
+>       combine (a:r) = a : combine r
+>
 
 
 > assocMaybeErr :: (Eq a) => [(a,b)] -> a -> MaybeErr b String
 > assocMaybeErr env k = case [ val | (key,val) <- env, k == key] of
 >                        [] -> Failed "assoc: "
 >                        (val:_) -> Succeeded val
-> 
+>
 
 
 
@@ -187,7 +187,7 @@
 
 
 > arrElem :: (Ix a, Ord a) => [a] -> a -> Bool
-> arrElem obj = \x -> inRange size x && arr ! x 
+> arrElem obj = \x -> inRange size x && arr ! x
 >   where
 >       obj' = sort obj
 >       size = (head obj',last obj')
@@ -219,9 +219,9 @@
 
 
 > listArray' :: (Int,Int) -> [a] -> Array Int a
-> listArray' (low,up) elems = 
->	if length elems /= up-low+1 then error "wibble" else
->	listArray (low,up) elems
+> listArray' (low,up) elems =
+>       if length elems /= up-low+1 then error "wibble" else
+>       listArray (low,up) elems
 
 
 
@@ -236,18 +236,18 @@
 > mapDollarDollar code0 = go code0 ""
 >   where go code acc =
 >           case code of
->		[] -> Nothing
->	
->		'"'  :r    -> case reads code :: [(String,String)] of
->				 []       -> go r ('"':acc)
->				 (s,r'):_ -> go r' (reverse (show s) ++ acc)
->		a:'\'' :r | isAlphaNum a -> go r ('\'':a:acc)
->		'\'' :r    -> case reads code :: [(Char,String)] of
->				 []       -> go r ('\'':acc)
->				 (c,r'):_ -> go r' (reverse (show c) ++ acc)
->		'\\':'$':r -> go r ('$':acc)
->		'$':'$':r  -> Just (\repl -> reverse acc ++ repl ++ r)
->		c:r  -> go r (c:acc)
+>               [] -> Nothing
+>
+>               '"'  :r    -> case reads code :: [(String,String)] of
+>                                []       -> go r ('"':acc)
+>                                (s,r'):_ -> go r' (reverse (show s) ++ acc)
+>               a:'\'' :r | isAlphaNum a -> go r ('\'':a:acc)
+>               '\'' :r    -> case reads code :: [(Char,String)] of
+>                                []       -> go r ('\'':acc)
+>                                (c,r'):_ -> go r' (reverse (show c) ++ acc)
+>               '\\':'$':r -> go r ('$':acc)
+>               '$':'$':r  -> Just (\repl -> reverse acc ++ repl ++ r)
+>               c:r  -> go r (c:acc)
 
 
 
@@ -265,7 +265,7 @@
 > interleave :: String -> [String -> String] -> String -> String
 > interleave s = foldr (\a b -> a . str s . b) id
 > interleave' :: String -> [String -> String] -> String -> String
-> interleave' s = foldr1 (\a b -> a . str s . b) 
+> interleave' s = foldr1 (\a b -> a . str s . b)
 
 
 > strspace :: String -> String
@@ -275,14 +275,12 @@
 
 
 > maybestr :: Maybe String -> String -> String
-> maybestr (Just s)	= str s
-> maybestr _		= id
+> maybestr (Just s)     = str s
+> maybestr _            = id
 
 
 > brack :: String -> String -> String
 > brack s = str ('(' : s) . char ')'
 > brack' :: (String -> String) -> String -> String
 > brack' s = char '(' . s . char ')'
-
-
 

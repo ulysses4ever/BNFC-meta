@@ -2,7 +2,7 @@ module Language.Haskell.TH.Hide(export) where
 import Data.List(partition)
 import Language.Haskell.TH
 
--- Takes a list of declaration and puts them all in a where-clause, exporting only some of them by pattern-matching on a tuple. 
+-- Takes a list of declaration and puts them all in a where-clause, exporting only some of them by pattern-matching on a tuple.
 export :: [Name] -> [Dec] -> Q [Dec]
 export el = buildClause el . partition whereable where
   whereable :: Dec -> Bool
@@ -14,14 +14,14 @@ export el = buildClause el . partition whereable where
     _            -> False
 
 buildClause el (wh,tl) = do
-  v <- valD 
-    (splitTup tupP [varP n | n <- el]) 
+  v <- valD
+    (splitTup tupP [varP n | n <- el])
     (normalB $ splitTup tupE [varE n | n <- el])
     (map return wh)
   return $ v : tl
 
 -- GHC has a limit on tuple size...
-splitTup :: ([a] -> a) -> [a] -> a 
+splitTup :: ([a] -> a) -> [a] -> a
 splitTup tup ls = case splitAt 60 ls of
   (_,[])       -> tup ls
   (first,rest) -> tup $ first ++ [splitTup tup rest]

@@ -50,12 +50,12 @@ getCFofG g = (cf,msgs ++ msgs1) where
   cf0 :: CF
   (cf0@(exts,_),msgs) = (revs . srt . conv $ g)
   srt :: [Either (Either Pragma TempRule) String] -> (CF, [String])
-  srt rs = let 
+  srt rs = let
        rules              = [fixRuleTokens n r | (n,Left (Right r)) <- zip [1..] rs]
        literals           = nub  [lit | Left xs <- map (snd . snd) rules,
                                    (Left lit) <- xs,
                                    elem lit specialCatsP]
-       
+
        pragma             = [r | Left (Left r) <- rs]
        tokens             = [i | TokenReg i _ _ <- pragma]
        errors             = [s | Right s <- rs, not (null s)]
@@ -63,23 +63,23 @@ getCFofG g = (cf,msgs ++ msgs1) where
        notIdent s         = null s || not (isIdentAlpha (head s)) || any (not . isIdentRest) s
        isIdentAlpha c     = isLatin1 c && isAlpha c
        isIdentRest c      = isIdentAlpha c || isDigit c || c == '_' || c == '\''
-       reservedWords      = nub [t | (_,(_,Left its)) <- rules, Right t <- its] ++ 
+       reservedWords      = nub [t | (_,(_,Left its)) <- rules, Right t <- its] ++
          concatMap (reservedLiteralAQ [ (b,i,a) | AntiQuote b i a <- pragma ]) (literals ++ tokens)
        cats               = []
-	    in (((pragma,(literals,symbols,keywords,cats)),rules),errors)
-	    
+            in (((pragma,(literals,symbols,keywords,cats)),rules),errors)
+
   revs :: (CF, [String]) -> (CF, [String])
   revs (cf@((pragma,(literals,symbols,keywords,_)),rules),errors) =
     (((pragma,
        (literals,symbols,keywords,findAllReversibleCats (cf))),rules),errors)
 
 fixRuleTokens :: Int -> TempRule -> Rule
-fixRuleTokens n (f,(c,rhs)) = 
+fixRuleTokens n (f,(c,rhs)) =
   (f,(c,either Left (\r -> Right (r,"RTL_"++show n)) rhs))
 
 
 
-  
+
 
 conv :: ParseMonad Abs.Grammar -> [Either (Either Pragma TempRule) String]
 conv (Bad s)                 = [Right s]
@@ -99,14 +99,14 @@ isAqLabel x = case x of
 transDef :: [Abs.Def] -> Abs.Def -> [Either Pragma TempRule]
 transDef defs x = case x of
 -- Abs.Rule label cat items | isAqLabel label -> []
- Abs.Rule label cat items -> 
+ Abs.Rule label cat items ->
    [Right (transLabel label,(transCat cat, transRHS items))]
  Abs.Comment str               -> [Left $ CommentS str]
  Abs.Comments str0 str         -> [Left $ CommentM (str0,str)]
  Abs.Token ident reg           -> [Left $ TokenReg (transIdent ident) False reg]
  Abs.PosToken ident reg        -> [Left $ TokenReg (transIdent ident) True reg]
  Abs.Entryp idents             -> [Left $ EntryPoints (map transIdent idents)]
- Abs.Internal label cat items  -> 
+ Abs.Internal label cat items  ->
    [Right (transLabel label,(transCat cat,(Left $ Left "#":(map transItem items))))]
  Abs.Separator size ident str -> map  Right $ separatorRules size ident str
  Abs.Terminator size ident str -> map  Right $ terminatorRules size ident str
@@ -118,7 +118,7 @@ transDef defs x = case x of
  Abs.Derive ss      -> [Left $ Derive [s|Abs.Ident s<-ss]]
 -- Abs.Function f xs e -> [Left $ FunDef (transIdent f) (map transArg xs) (transExp e)]
  Abs.AntiQuote b i a ->
-   [Left $ AntiQuote b i a] 
+   [Left $ AntiQuote b i a]
    ++ [Left  $ TokenReg "AqToken" False $ aqToken i a]
    ++ aqRules (b,i,a) (getCats defs) where
    reg = aqToken a
@@ -162,7 +162,7 @@ aqFun = "$global_aq"
 
 -- addSpecials :: (String,String,String) -> [Either Pragma Rule] -> [Either Pragma Rule]
 -- addSpecials (b,i,a) rs = rs ++ concatMap special literals where
-  
+
 --  special aqs@('A':'Q':'_':s) = map Right [(aqs,(aqs,[Left s])),
 --    (renameAq s,(rename s, [Right b,Left "AqToken"])),
 --    (renameAqt s,(rename s, [Right (b++s), Left "AqToken"]))
@@ -180,7 +180,7 @@ separatorRules size c s = if null s then terminatorRules size c s else ifEmpty [
   ("(:[])", (cs,Left [Left c'])),
   ("(:)",   (cs,Left [Left c', Right s, Left cs]))
   ]
- where 
+ where
    c' = transCat c
    cs = "[" ++ c' ++ "]"
    ifEmpty rs = if (size == Abs.MNonempty) then rs else (("[]", (cs,Left [])) : rs)
@@ -190,23 +190,23 @@ terminatorRules size c s = [
   ifEmpty,
   ("(:)",   (cs,Left $ Left c' : s' [Left cs]))
   ]
- where 
+ where
    c' = transCat c
    cs = "[" ++ c' ++ "]"
    s' its = if null s then its else (Right s : its)
-   ifEmpty = if (size == Abs.MNonempty) 
+   ifEmpty = if (size == Abs.MNonempty)
                 then ("(:[])",(cs,Left $ [Left c'] ++ if null s then [] else [Right s]))
                 else ("[]",   (cs,Left []))
 
 coercionRules :: Abs.Ident -> Integer -> [TempRule]
-coercionRules (Abs.Ident c) n = 
+coercionRules (Abs.Ident c) n =
    ("_", (c,               Left [Left (c ++ "1")])) :
   [("_", (c ++ show (i-1), Left [Left (c ++ show i)])) | i <- [2..n]] ++
   [("_", (c ++ show n,     Left [Right "(", Left c, Right ")"]))]
 
-  
+
 ebnfRules :: Abs.Ident -> [Abs.RHS] -> [TempRule]
-ebnfRules (Abs.Ident c) rhss = 
+ebnfRules (Abs.Ident c) rhss =
   [(mkFun k c rhs, (c, transRHS rhs)) | (k, rhs) <- zip [1 :: Int ..] rhss]
  where
    mkFun :: Int -> String -> Abs.RHS -> String
@@ -215,7 +215,7 @@ ebnfRules (Abs.Ident c) rhss =
      (Abs.RHS [Abs.NTerminal n]) -> c' ++ identCat (transCat n)
      _ -> c' ++ "_" ++ show k
    c' = c --- normCat c
-   mkName k s = if all (\c -> isAlphaNum c || elem c "_'") s 
+   mkName k s = if all (\c -> isAlphaNum c || elem c "_'") s
                    then s else show k
 
 
@@ -246,7 +246,7 @@ transLabel y = let g = transLabelId y in g
      Abs.ListOne   -> "(:[])"
      Abs.Aq (Abs.JIdent i)     -> "$" ++ transIdent i
      Abs.Aq _     -> "$"
---   transProf (Abs.ProfIt bss as) = 
+--   transProf (Abs.ProfIt bss as) =
 --     ([map fromInteger bs | Abs.Ints bs <- bss], map fromInteger as)
 
 transIdent :: Abs.Ident -> String
@@ -259,16 +259,14 @@ transArg (Abs.Arg x) = transIdent x
 transExp :: Abs.Exp -> Exp
 transExp e = case e of
     Abs.App x es    -> App (transIdent x) (map transExp es)
-    Abs.Var x	    -> App (transIdent x) []
+    Abs.Var x       -> App (transIdent x) []
     Abs.Cons e1 e2  -> cons e1 (transExp e2)
-    Abs.List es	    -> foldr cons nil es
+    Abs.List es     -> foldr cons nil es
     Abs.LitInt x    -> LitInt x
     Abs.LitDouble x -> LitDouble x
     Abs.LitChar x   -> LitChar x
     Abs.LitString x -> LitString x
   where
     cons e1 e2 = App "(:)" [transExp e1, e2]
-    nil	       = App "[]" []
-
-
+    nil        = App "[]" []
 

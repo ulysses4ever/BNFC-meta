@@ -42,7 +42,7 @@ alexIndexInt16OffAddr (AlexA# arr) off = |] ++
   [verbatim|
     indexInt16OffAddr# arr off
   |]
-#endif 
+#endif
   ++ [verbatim|
 
 
@@ -102,7 +102,7 @@ alexScanUser user input (I# (sc))
   = case alex_scan_tkn user input 0# input sc AlexNone of
         (AlexNone, input') ->
                 case alexGetByte input of
-                        Nothing -> 
+                        Nothing ->
 
 
 
@@ -131,13 +131,13 @@ alexScanUser user input (I# (sc))
 
 alex_scan_tkn user orig_input len input s last_acc =
   input `seq` -- strict in the input
-  let 
+  let
         new_acc = (check_accs (alex_accept `quickIndex` (I# (s))))
   in
   new_acc `seq`
   case alexGetByte input of
      Nothing -> (new_acc, input)
-     Just (c, new_input) -> 
+     Just (c, new_input) ->
 
 
 
@@ -146,12 +146,12 @@ alex_scan_tkn user orig_input len input s last_acc =
                 ((I# (ord_c))) = fromIntegral c
                 (offset) = (base +# ord_c)
                 (check)  = alexIndexInt16OffAddr alex_check offset
-                
+
                 (new_s) = if (offset >=# 0#) && (check ==# ord_c)
                           then alexIndexInt16OffAddr alex_table offset
                           else alexIndexInt16OffAddr alex_deflt s
         in
-        case new_s of 
+        case new_s of
             -1# -> (new_acc, input)
                 -- on an error, we want to keep the input *before* the
                 -- character that failed, not after.
@@ -195,16 +195,16 @@ type AlexAccPred user = user -> AlexInput -> Int -> AlexInput -> Bool
 alexAndPred p1 p2 user in1 len in2
   = p1 user in1 len in2 && p2 user in1 len in2
 
---alexPrevCharIsPred :: Char -> AlexAccPred _ 
+--alexPrevCharIsPred :: Char -> AlexAccPred _
 alexPrevCharIs c _ input _ _ = c == alexInputPrevChar input
 
 alexPrevCharMatches f _ input _ _ = f (alexInputPrevChar input)
 
---alexPrevCharIsOneOfPred :: Array Char Bool -> AlexAccPred _ 
+--alexPrevCharIsOneOfPred :: Array Char Bool -> AlexAccPred _
 alexPrevCharIsOneOf arr _ input _ _ = arr ! alexInputPrevChar input
 
 --alexRightContext :: Int -> AlexAccPred _
-alexRightContext (I# (sc)) user _ _ input = 
+alexRightContext (I# (sc)) user _ _ input =
      case alex_scan_tkn user input 0# input sc AlexNone of
           (AlexNone, _) -> False
           _ -> True

@@ -15,9 +15,9 @@
 
 
 > module AbsSyn (
-> 	AbsSyn(..), Directive(..),
-> 	getTokenType, getTokenSpec, getParserNames, getLexer,
->	getImportedIdentity, getMonad, getError,
+>       AbsSyn(..), Directive(..),
+>       getTokenType, getTokenSpec, getParserNames, getLexer,
+>       getImportedIdentity, getMonad, getError,
 >       getPrios, getPrioNames, getExpect,
 >       getAttributes, getAttributetype,
 >       Rule,Prod,Term(..)
@@ -26,10 +26,10 @@
 
 > data AbsSyn
 >     = AbsSyn
->         (Maybe String)					-- header
->         [Directive String]      				-- directives
->         [Rule]	-- productions
->         (Maybe String)					-- footer
+>         (Maybe String)                                        -- header
+>         [Directive String]                                    -- directives
+>         [Rule]        -- productions
+>         (Maybe String)                                        -- footer
 
 
 > type Rule     = (String,[String],[Prod],Maybe String)
@@ -63,15 +63,15 @@
 
 
 > data Directive a
->       = TokenType     String              	-- %tokentype
->       | TokenSpec     [(a,String)]         	-- %token
+>       = TokenType     String                  -- %tokentype
+>       | TokenSpec     [(a,String)]            -- %token
 >       | TokenName     String (Maybe String) Bool -- %name/%partial (True <=> %partial)
->       | TokenLexer    String String        	-- %lexer
->       | TokenImportedIdentity					-- %importedidentity
->	| TokenMonad    String String String String -- %monad
->	| TokenNonassoc [String]	  	-- %nonassoc
->	| TokenRight    [String]		-- %right
->	| TokenLeft     [String]		-- %left
+>       | TokenLexer    String String           -- %lexer
+>       | TokenImportedIdentity                                 -- %importedidentity
+>       | TokenMonad    String String String String -- %monad
+>       | TokenNonassoc [String]                -- %nonassoc
+>       | TokenRight    [String]                -- %right
+>       | TokenLeft     [String]                -- %left
 >       | TokenExpect   Int                     -- %expect
 >       | TokenError    String                  -- %error
 >       | TokenAttributetype String             -- %attributetype
@@ -90,11 +90,11 @@
 
 
 > getTokenType :: [Directive t] -> String
-> getTokenType ds 
-> 	= case [ t | (TokenType t) <- ds ] of 
->		[t] -> t
->		[]  -> error "no token type given"
->		_   -> error "multiple token types"
+> getTokenType ds
+>       = case [ t | (TokenType t) <- ds ] of
+>               [t] -> t
+>               []  -> error "no token type given"
+>               _   -> error "multiple token types"
 
 
 > getParserNames :: [Directive t] -> [Directive t]
@@ -102,27 +102,27 @@
 
 
 > getLexer :: [Directive t] -> Maybe (String, String)
-> getLexer ds 
-> 	= case [ (a,b) | (TokenLexer a b) <- ds ] of
-> 		[t] -> Just t
->		[]  -> Nothing
->		_   -> error "multiple lexer directives"
+> getLexer ds
+>       = case [ (a,b) | (TokenLexer a b) <- ds ] of
+>               [t] -> Just t
+>               []  -> Nothing
+>               _   -> error "multiple lexer directives"
 
 
 > getImportedIdentity :: [Directive t] -> Bool
-> getImportedIdentity ds 
-> 	= case [ (()) | TokenImportedIdentity <- ds ] of
-> 		[_] -> True
->		[]  -> False
->		_   -> error "multiple importedidentity directives"
+> getImportedIdentity ds
+>       = case [ (()) | TokenImportedIdentity <- ds ] of
+>               [_] -> True
+>               []  -> False
+>               _   -> error "multiple importedidentity directives"
 
 
 > getMonad :: [Directive t] -> (Bool, String, String, String, String)
-> getMonad ds 
-> 	= case [ (True,a,b,c,d) | (TokenMonad a b c d) <- ds ] of
-> 		[t] -> t
->		[]  -> (False,"()","HappyIdentity",">>=","return")
->		_   -> error "multiple monad directives"
+> getMonad ds
+>       = case [ (True,a,b,c,d) | (TokenMonad a b c d) <- ds ] of
+>               [t] -> t
+>               []  -> (False,"()","HappyIdentity",">>=","return")
+>               _   -> error "multiple monad directives"
 
 
 > getTokenSpec :: [Directive t] -> [(t, String)]
@@ -132,10 +132,10 @@
 > getPrios :: [Directive t] -> [Directive t]
 > getPrios ds = [ d | d <- ds,
 >                 case d of
->		    TokenNonassoc _ -> True
->		    TokenLeft _ -> True
->		    TokenRight _ -> True
->		    _ -> False
+>                   TokenNonassoc _ -> True
+>                   TokenLeft _ -> True
+>                   TokenRight _ -> True
+>                   _ -> False
 >               ]
 
 
@@ -155,11 +155,11 @@
 
 
 > getError :: [Directive t] -> Maybe String
-> getError ds 
-> 	= case [ a | (TokenError a) <- ds ] of
-> 		[t] -> Just t
->		[]  -> Nothing
->		_   -> error "multiple error directives"
+> getError ds
+>       = case [ a | (TokenError a) <- ds ] of
+>               [t] -> Just t
+>               []  -> Nothing
+>               _   -> error "multiple error directives"
 
 
 > getAttributes :: [Directive t] -> [(String, String)]

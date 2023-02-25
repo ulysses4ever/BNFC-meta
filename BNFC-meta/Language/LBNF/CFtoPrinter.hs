@@ -49,14 +49,14 @@ identRule cf = ownPrintRule cf "Ident"
 ownPrintRule :: CF -> String -> DecQ
 ownPrintRule cf own = do
   i <- newName "i"
-  let 
-    posn = if isPositionCat cf own 
+  let
+    posn = if isPositionCat cf own
       then conP (mkName own) [tupP [wildP, varP i]]
       else conP (mkName own) [varP i]
     body = normalB [|doc (showString $(varE i))|]
     prtc = funD ('prt) [clause [wildP, posn] body []]
   instanceD (cxt []) (appT (conT $ ''Print) $ conT $ mkName own) [prtc]
- 
+
 {-unlines $ [
   "instance Print " ++ own ++ " where",
   "  prt _ (" ++ own ++ posn ++ ") = doc (showString i)",
@@ -68,9 +68,9 @@ ownPrintRule cf own = do
 -- copy and paste from CFtoTemplate
 
 rules :: CF -> [Q Dec]
-rules cf = 
+rules cf =
   map (\(s,xs) -> case_fun s (map toArgs xs) (ifList cf s)) $ cf2data cf
- where 
+ where
    toArgs (cons,Left args) = ((cons, names (map (checkRes . var) args) (0 :: Int)), ruleOf cons)
    toArgs (cons,Right reg) = ((cons, names ["s"] (0 :: Int)), ruleOf cons)
    names [] _ = []
@@ -86,10 +86,10 @@ rules cf =
    var xs        = map toLower xs
    checkRes s
         | elem s reservedHaskell = s ++ "'"
-	| otherwise              = s
+        | otherwise              = s
    reservedHaskell = ["case","class","data","default","deriving","do","else","if",
-		      "import","in","infix","infixl","infixr","instance","let","module",
-		      "newtype","of","then","type","where","as","qualified","hiding"]
+                      "import","in","infix","infixl","infixr","instance","let","module",
+                      "newtype","of","then","type","where","as","qualified","hiding"]
    ruleOf s = maybe undefined id $ lookup s (rulesOfCF cf)
 
 -- case_fun :: Cat -> [(Con,Rule)] -> Q Dec
@@ -99,33 +99,33 @@ case_fun cat xs lst =
     prtc i n = funD ('prt) [clause [varP i,varP n] (body) []] where
       body = normalB $ caseE (varE n) $
         map mtch xs
-      mtch ((c,xx),r) = match 
+      mtch ((c,xx),r) = match
         (conP (mkName c) [varP (mkName x)|x <- xx])
-        (normalB 
-          [| prPrec 
-               $(varE i) 
-               $(litE $ IntegerL $ toInteger $ precCat $ fst r) 
+        (normalB
+          [| prPrec
+               $(varE i)
+               $(litE $ IntegerL $ toInteger $ precCat $ fst r)
                $(mkRhs xx (snd r))
           |])
         []
-  
+
 {-
 unlines [
   "instance Print" +++ cat +++ "where",
   "  prt i" +++ "e = case e of",
-  unlines $ map (\ ((c,xx),r) -> 
-    "   " ++ c +++ unwords xx +++ "->" +++ 
+  unlines $ map (\ ((c,xx),r) ->
+    "   " ++ c +++ unwords xx +++ "->" +++
     "prPrec i" +++ show (precCat (fst r)) +++ mkRhs xx (snd r)) xs
   ]
 -}
 
 ifList :: CF -> String -> [DecQ]
 ifList cf cat = mkListRule $ nil cat ++ one cat ++ cons cat where
-  nil cat  = [(listP [],mkRhs [] its) | 
+  nil cat  = [(listP [],mkRhs [] its) |
                             (f,(c,its)) <- rulesOfCF cf, isNilFun f , normCatOfList c == cat]
-  one cat  = [(listP [varP $ mkName "x"], mkRhs ["x"] its) | 
+  one cat  = [(listP [varP $ mkName "x"], mkRhs ["x"] its) |
                             (f,(c,its)) <- rulesOfCF cf, isOneFun f , normCatOfList c == cat]
-  cons cat = [(conP '(:) [varP $ mkName "x",varP $ mkName "xs"], mkRhs ["x","xs"] its) | 
+  cons cat = [(conP '(:) [varP $ mkName "x",varP $ mkName "xs"], mkRhs ["x","xs"] its) |
                             (f,(c,its)) <- rulesOfCF cf, isConsFun f , normCatOfList c == cat]
   mkListRule [] = []
   mkListRule rs = [do

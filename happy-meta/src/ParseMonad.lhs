@@ -27,13 +27,13 @@
 
 
 > instance Monad P where
->	return m = P $ \ _ _ -> OkP m
->	m >>= k =  P $ \s l -> case runP m s l of
->		OkP a -> runP (k a) s l
->		FailP err -> FailP err
+>       return m = P $ \ _ _ -> OkP m
+>       m >>= k =  P $ \s l -> case runP m s l of
+>               OkP a -> runP (k a) s l
+>               FailP err -> FailP err
 
 > instance Fail.MonadFail P where
->	fail s = P $ \ _ _ -> FailP s
+>       fail s = P $ \ _ _ -> FailP s
 
 > instance Functor P where
 >   fmap f a = a >>= (return . f)
