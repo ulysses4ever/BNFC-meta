@@ -146,5 +146,3 @@ groupEquivStates DFA { dfa_states = statemap }
                                 | z == y    = i : d : zs
                                 | otherwise = z : replaceyin zs
 
-
-

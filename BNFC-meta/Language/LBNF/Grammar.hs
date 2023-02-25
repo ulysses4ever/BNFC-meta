@@ -440,12 +440,12 @@ alex_deflt :: Array Int Int
 alex_deflt = listArray (0,63) [-1,6,6,-1,-1,-1,6,-1,-1,-1,-1,-1,-1,-1,21,21,-1,23,23,25,25,29,29,35,35,39,39,6,6,6,40,40,4,4,4,4,45,-1,45,45,49,49,-1,-1,-1,45,-1,50,50,50,50,6,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
 
 alex_accept = listArray (0::Int,63) [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[(AlexAccSkip)],[(AlexAccSkip)],[(AlexAccSkip)],[(AlexAccSkip)],[(AlexAcc (alex_action_3))],[(AlexAcc (alex_action_3))],[(AlexAcc (alex_action_3))],[(AlexAcc (alex_action_3))],[(AlexAcc (alex_action_4))],[(AlexAcc (alex_action_5))],[(AlexAcc (alex_action_6))],[(AlexAcc (alex_action_7))],[(AlexAcc (alex_action_8))],[(AlexAcc (alex_action_8))]]
-alex_action_3 =  tok (\p s -> PT p (eitherResIdent (TV . share) s)) 
-alex_action_4 =  tok (\p s -> PT p (eitherResIdent (TV . share) s)) 
-alex_action_5 =  tok (\p s -> PT p (TL $ share $ unescapeInitTail s)) 
-alex_action_6 =  tok (\p s -> PT p (TC $ share s))  
-alex_action_7 =  tok (\p s -> PT p (TI $ share s))    
-alex_action_8 =  tok (\p s -> PT p (TD $ share s)) 
+alex_action_3 =  tok (\p s -> PT p (eitherResIdent (TV . share) s))
+alex_action_4 =  tok (\p s -> PT p (eitherResIdent (TV . share) s))
+alex_action_5 =  tok (\p s -> PT p (TL $ share $ unescapeInitTail s))
+alex_action_6 =  tok (\p s -> PT p (TC $ share s))
+alex_action_7 =  tok (\p s -> PT p (TI $ share s))
+alex_action_8 =  tok (\p s -> PT p (TD $ share s))
 
 
 tok f p s = f p s
@@ -463,7 +463,7 @@ data Tok =
 
  deriving (Eq,Show,Ord)
 
-data Token = 
+data Token =
    PT  Posn Tok
  | Err Posn
   deriving (Eq,Show,Ord)
@@ -550,30 +550,30 @@ alexScan input (sc)
 
 alexScanUser user input (sc)
   = case alex_scan_tkn user input (0) input sc AlexNone of
-	(AlexNone, input') ->
-		case alexGetByte input of
-			Nothing -> 
+        (AlexNone, input') ->
+                case alexGetByte input of
+                        Nothing ->
 
 
 
-				   AlexEOF
-			Just _ ->
+                                   AlexEOF
+                        Just _ ->
 
 
 
-				   AlexError input'
+                                   AlexError input'
 
-	(AlexLastSkip input'' len, _) ->
-
-
-
-		AlexSkip input'' len
-
-	(AlexLastAcc k input''' len, _) ->
+        (AlexLastSkip input'' len, _) ->
 
 
 
-		AlexToken input''' len k
+                AlexSkip input'' len
+
+        (AlexLastAcc k input''' len, _) ->
+
+
+
+                AlexToken input''' len k
 
 
 -- Push the input through the DFA, remembering the most recent accepting
@@ -581,45 +581,45 @@ alexScanUser user input (sc)
 
 alex_scan_tkn user orig_input len input s last_acc =
   input `seq` -- strict in the input
-  let 
-	new_acc = (check_accs (alex_accept `quickIndex` (s)))
+  let
+        new_acc = (check_accs (alex_accept `quickIndex` (s)))
   in
   new_acc `seq`
   case alexGetByte input of
      Nothing -> (new_acc, input)
-     Just (c, new_input) -> 
+     Just (c, new_input) ->
 
 
 
-	let
-		(base) = alexIndexInt32OffAddr alex_base s
-		((ord_c)) = fromIntegral c
-		(offset) = (base + ord_c)
-		(check)  = alexIndexInt16OffAddr alex_check offset
-		
-		(new_s) = if (offset >= (0)) && (check == ord_c)
-			  then alexIndexInt16OffAddr alex_table offset
-			  else alexIndexInt16OffAddr alex_deflt s
-	in
-	case new_s of 
-	    (-1) -> (new_acc, input)
-		-- on an error, we want to keep the input *before* the
-		-- character that failed, not after.
-    	    _ -> alex_scan_tkn user orig_input (if c < 0x80 || c >= 0xC0 then (len + (1)) else len)
+        let
+                (base) = alexIndexInt32OffAddr alex_base s
+                ((ord_c)) = fromIntegral c
+                (offset) = (base + ord_c)
+                (check)  = alexIndexInt16OffAddr alex_check offset
+
+                (new_s) = if (offset >= (0)) && (check == ord_c)
+                          then alexIndexInt16OffAddr alex_table offset
+                          else alexIndexInt16OffAddr alex_deflt s
+        in
+        case new_s of
+            (-1) -> (new_acc, input)
+                -- on an error, we want to keep the input *before* the
+                -- character that failed, not after.
+            _ -> alex_scan_tkn user orig_input (if c < 0x80 || c >= 0xC0 then (len + (1)) else len)
                                                 -- note that the length is increased ONLY if this is the 1st byte in a char encoding)
-			new_input new_s new_acc
+                        new_input new_s new_acc
 
   where
-	check_accs [] = last_acc
-	check_accs (AlexAcc a : _) = AlexLastAcc a input (len)
-	check_accs (AlexAccSkip : _)  = AlexLastSkip  input (len)
-	check_accs (AlexAccPred a predx : rest)
-	   | predx user orig_input (len) input
-	   = AlexLastAcc a input (len)
-	check_accs (AlexAccSkipPred predx : rest)
-	   | predx user orig_input (len) input
-	   = AlexLastSkip input (len)
-	check_accs (_ : rest) = check_accs rest
+        check_accs [] = last_acc
+        check_accs (AlexAcc a : _) = AlexLastAcc a input (len)
+        check_accs (AlexAccSkip : _)  = AlexLastSkip  input (len)
+        check_accs (AlexAccPred a predx : rest)
+           | predx user orig_input (len) input
+           = AlexLastAcc a input (len)
+        check_accs (AlexAccSkipPred predx : rest)
+           | predx user orig_input (len) input
+           = AlexLastSkip input (len)
+        check_accs (_ : rest) = check_accs rest
 
 data AlexLastAcc a
   = AlexNone
@@ -645,59 +645,59 @@ type AlexAccPred user = user -> AlexInput -> Int -> AlexInput -> Bool
 alexAndPred p1 p2 user in1 len in2
   = p1 user in1 len in2 && p2 user in1 len in2
 
---alexPrevCharIsPred :: Char -> AlexAccPred _ 
+--alexPrevCharIsPred :: Char -> AlexAccPred _
 alexPrevCharIs c _ input _ _ = c == alexInputPrevChar input
 
 alexPrevCharMatches f _ input _ _ = f (alexInputPrevChar input)
 
---alexPrevCharIsOneOfPred :: Array Char Bool -> AlexAccPred _ 
+--alexPrevCharIsOneOfPred :: Array Char Bool -> AlexAccPred _
 alexPrevCharIsOneOf arr _ input _ _ = arr ! alexInputPrevChar input
 
 --alexRightContext :: Int -> AlexAccPred _
-alexRightContext (sc) user _ _ input = 
+alexRightContext (sc) user _ _ input =
      case alex_scan_tkn user input (0) input sc AlexNone of
-	  (AlexNone, _) -> False
-	  _ -> True
-	-- TODO: there's no need to find the longest
-	-- match when checking the right context, just
-	-- the first match will do.
+          (AlexNone, _) -> False
+          _ -> True
+        -- TODO: there's no need to find the longest
+        -- match when checking the right context, just
+        -- the first match will do.
 
 -- used by wrappers
 iUnbox (i) = i
 
 {-# OPTIONS_GHC -fno-warn-overlapping-patterns #-}
 
--- parser produced by Happy 
+-- parser produced by Happy
 
-data HappyAbsSyn 
-	= HappyTerminal (Token)
-	| HappyErrorToken Int
-	| HappyAbsSyn59 (String)
-	| HappyAbsSyn60 (BNFC_QQType)
-	| HappyAbsSyn61 (Ident)
-	| HappyAbsSyn63 (Integer)
-	| HappyAbsSyn65 (Char)
-	| HappyAbsSyn67 (Double)
-	| HappyAbsSyn69 (Grammar)
-	| HappyAbsSyn71 ([Def])
-	| HappyAbsSyn73 ([Item])
-	| HappyAbsSyn75 (Def)
-	| HappyAbsSyn77 (RHS)
-	| HappyAbsSyn79 ([RHS])
-	| HappyAbsSyn81 (Item)
-	| HappyAbsSyn83 (Cat)
-	| HappyAbsSyn87 (Label)
-	| HappyAbsSyn89 (MIdent)
-	| HappyAbsSyn91 (HsTyp)
-	| HappyAbsSyn95 ([HsTyp])
-	| HappyAbsSyn97 (Arg)
-	| HappyAbsSyn99 ([Arg])
-	| HappyAbsSyn101 (Exp)
-	| HappyAbsSyn107 ([Exp])
-	| HappyAbsSyn111 ([String])
-	| HappyAbsSyn113 (MinimumSize)
-	| HappyAbsSyn115 (Reg)
-	| HappyAbsSyn123 ([Ident])
+data HappyAbsSyn
+        = HappyTerminal (Token)
+        | HappyErrorToken Int
+        | HappyAbsSyn59 (String)
+        | HappyAbsSyn60 (BNFC_QQType)
+        | HappyAbsSyn61 (Ident)
+        | HappyAbsSyn63 (Integer)
+        | HappyAbsSyn65 (Char)
+        | HappyAbsSyn67 (Double)
+        | HappyAbsSyn69 (Grammar)
+        | HappyAbsSyn71 ([Def])
+        | HappyAbsSyn73 ([Item])
+        | HappyAbsSyn75 (Def)
+        | HappyAbsSyn77 (RHS)
+        | HappyAbsSyn79 ([RHS])
+        | HappyAbsSyn81 (Item)
+        | HappyAbsSyn83 (Cat)
+        | HappyAbsSyn87 (Label)
+        | HappyAbsSyn89 (MIdent)
+        | HappyAbsSyn91 (HsTyp)
+        | HappyAbsSyn95 ([HsTyp])
+        | HappyAbsSyn97 (Arg)
+        | HappyAbsSyn99 ([Arg])
+        | HappyAbsSyn101 (Exp)
+        | HappyAbsSyn107 ([Exp])
+        | HappyAbsSyn111 ([String])
+        | HappyAbsSyn113 (MinimumSize)
+        | HappyAbsSyn115 (Reg)
+        | HappyAbsSyn123 ([Ident])
 
 {- to allow type-synonyms as our monads (likely
  - with explicitly-specified bind and return)
@@ -705,13 +705,13 @@ data HappyAbsSyn
  - /type M a = .../, then /(HappyReduction M)/
  - is not allowed.  But Happy is a
  - code-generator that can just substitute it.
-type HappyReduction m = 
-	   Int 
-	-> (Token)
-	-> HappyState (Token) (HappyStk HappyAbsSyn -> [(Token)] -> m HappyAbsSyn)
-	-> [HappyState (Token) (HappyStk HappyAbsSyn -> [(Token)] -> m HappyAbsSyn)] 
-	-> HappyStk HappyAbsSyn 
-	-> [(Token)] -> m HappyAbsSyn
+type HappyReduction m =
+           Int
+        -> (Token)
+        -> HappyState (Token) (HappyStk HappyAbsSyn -> [(Token)] -> m HappyAbsSyn)
+        -> [HappyState (Token) (HappyStk HappyAbsSyn -> [(Token)] -> m HappyAbsSyn)]
+        -> HappyStk HappyAbsSyn
+        -> [(Token)] -> m HappyAbsSyn
 -}
 
 action_0,
@@ -1157,12 +1157,12 @@ action_0,
  action_440,
  action_441,
  action_442 :: () => Int -> ({-HappyReduction (ParseMonad) = -}
-	   Int 
-	-> (Token)
-	-> HappyState (Token) (HappyStk HappyAbsSyn -> [(Token)] -> (ParseMonad) HappyAbsSyn)
-	-> [HappyState (Token) (HappyStk HappyAbsSyn -> [(Token)] -> (ParseMonad) HappyAbsSyn)] 
-	-> HappyStk HappyAbsSyn 
-	-> [(Token)] -> (ParseMonad) HappyAbsSyn)
+           Int
+        -> (Token)
+        -> HappyState (Token) (HappyStk HappyAbsSyn -> [(Token)] -> (ParseMonad) HappyAbsSyn)
+        -> [HappyState (Token) (HappyStk HappyAbsSyn -> [(Token)] -> (ParseMonad) HappyAbsSyn)]
+        -> HappyStk HappyAbsSyn
+        -> [(Token)] -> (ParseMonad) HappyAbsSyn)
 
 happyReduce_56,
  happyReduce_57,
@@ -1358,12 +1358,12 @@ happyReduce_56,
  happyReduce_247,
  happyReduce_248,
  happyReduce_249 :: () => ({-HappyReduction (ParseMonad) = -}
-	   Int 
-	-> (Token)
-	-> HappyState (Token) (HappyStk HappyAbsSyn -> [(Token)] -> (ParseMonad) HappyAbsSyn)
-	-> [HappyState (Token) (HappyStk HappyAbsSyn -> [(Token)] -> (ParseMonad) HappyAbsSyn)] 
-	-> HappyStk HappyAbsSyn 
-	-> [(Token)] -> (ParseMonad) HappyAbsSyn)
+           Int
+        -> (Token)
+        -> HappyState (Token) (HappyStk HappyAbsSyn -> [(Token)] -> (ParseMonad) HappyAbsSyn)
+        -> [HappyState (Token) (HappyStk HappyAbsSyn -> [(Token)] -> (ParseMonad) HappyAbsSyn)]
+        -> HappyStk HappyAbsSyn
+        -> [(Token)] -> (ParseMonad) HappyAbsSyn)
 
 action_0 (125) = happyShift action_179
 action_0 (126) = happyShift action_180
@@ -3764,1567 +3764,1567 @@ action_442 _ = happyReduce_99
 
 happyReduce_56 = happySpecReduce_1  59 happyReduction_56
 happyReduction_56 (HappyTerminal (PT _ (TL happy_var_1)))
-	 =  HappyAbsSyn59
-		 (happy_var_1
-	)
-happyReduction_56 _  = notHappyAtAll 
+         =  HappyAbsSyn59
+                 (happy_var_1
+        )
+happyReduction_56 _  = notHappyAtAll
 
 happyReduce_57 = happySpecReduce_1  60 happyReduction_57
 happyReduction_57 (HappyTerminal (PT _ (TL happy_var_1)))
-	 =  HappyAbsSyn60
-		 (fromString myLocation happy_var_1
-	)
-happyReduction_57 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (fromString myLocation happy_var_1
+        )
+happyReduction_57 _  = notHappyAtAll
 
 happyReduce_58 = happySpecReduce_1  61 happyReduction_58
 happyReduction_58 (HappyTerminal (PT _ (TV happy_var_1)))
-	 =  HappyAbsSyn61
-		 (Ident happy_var_1
-	)
-happyReduction_58 _  = notHappyAtAll 
+         =  HappyAbsSyn61
+                 (Ident happy_var_1
+        )
+happyReduction_58 _  = notHappyAtAll
 
 happyReduce_59 = happySpecReduce_1  62 happyReduction_59
 happyReduction_59 (HappyTerminal (PT _ (TV happy_var_1)))
-	 =  HappyAbsSyn60
-		 (fromToken myLocation "Ident" happy_var_1
-	)
-happyReduction_59 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (fromToken myLocation "Ident" happy_var_1
+        )
+happyReduction_59 _  = notHappyAtAll
 
 happyReduce_60 = happySpecReduce_1  63 happyReduction_60
 happyReduction_60 (HappyTerminal (PT _ (TI happy_var_1)))
-	 =  HappyAbsSyn63
-		 ((read happy_var_1) :: Integer
-	)
-happyReduction_60 _  = notHappyAtAll 
+         =  HappyAbsSyn63
+                 ((read happy_var_1) :: Integer
+        )
+happyReduction_60 _  = notHappyAtAll
 
 happyReduce_61 = happySpecReduce_1  64 happyReduction_61
 happyReduction_61 (HappyTerminal (PT _ (TI happy_var_1)))
-	 =  HappyAbsSyn60
-		 (fromLit myLocation (read happy_var_1 :: Integer)
-	)
-happyReduction_61 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (fromLit myLocation (read happy_var_1 :: Integer)
+        )
+happyReduction_61 _  = notHappyAtAll
 
 happyReduce_62 = happySpecReduce_1  65 happyReduction_62
 happyReduction_62 (HappyTerminal (PT _ (TC happy_var_1)))
-	 =  HappyAbsSyn65
-		 ((read happy_var_1) :: Char
-	)
-happyReduction_62 _  = notHappyAtAll 
+         =  HappyAbsSyn65
+                 ((read happy_var_1) :: Char
+        )
+happyReduction_62 _  = notHappyAtAll
 
 happyReduce_63 = happySpecReduce_1  66 happyReduction_63
 happyReduction_63 (HappyTerminal (PT _ (TC happy_var_1)))
-	 =  HappyAbsSyn60
-		 (fromLit myLocation  (read happy_var_1 :: Char)
-	)
-happyReduction_63 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (fromLit myLocation  (read happy_var_1 :: Char)
+        )
+happyReduction_63 _  = notHappyAtAll
 
 happyReduce_64 = happySpecReduce_1  67 happyReduction_64
 happyReduction_64 (HappyTerminal (PT _ (TD happy_var_1)))
-	 =  HappyAbsSyn67
-		 ((read happy_var_1) :: Double
-	)
-happyReduction_64 _  = notHappyAtAll 
+         =  HappyAbsSyn67
+                 ((read happy_var_1) :: Double
+        )
+happyReduction_64 _  = notHappyAtAll
 
 happyReduce_65 = happySpecReduce_1  68 happyReduction_65
 happyReduction_65 (HappyTerminal (PT _ (TD happy_var_1)))
-	 =  HappyAbsSyn60
-		 (fromLit myLocation  (read happy_var_1 :: Double)
-	)
-happyReduction_65 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (fromLit myLocation  (read happy_var_1 :: Double)
+        )
+happyReduction_65 _  = notHappyAtAll
 
 happyReduce_66 = happySpecReduce_1  69 happyReduction_66
 happyReduction_66 (HappyAbsSyn71  happy_var_1)
-	 =  HappyAbsSyn69
-		 (Grammar (happy_var_1)
-	)
-happyReduction_66 _  = notHappyAtAll 
+         =  HappyAbsSyn69
+                 (Grammar (happy_var_1)
+        )
+happyReduction_66 _  = notHappyAtAll
 
 happyReduce_67 = happySpecReduce_1  70 happyReduction_67
 happyReduction_67 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "Grammar"  [happy_var_1]
-	)
-happyReduction_67 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "Grammar"  [happy_var_1]
+        )
+happyReduction_67 _  = notHappyAtAll
 
 happyReduce_68 = happySpecReduce_0  71 happyReduction_68
 happyReduction_68  =  HappyAbsSyn71
-		 ([]
-	)
+                 ([]
+        )
 
 happyReduce_69 = happySpecReduce_1  71 happyReduction_69
 happyReduction_69 (HappyAbsSyn75  happy_var_1)
-	 =  HappyAbsSyn71
-		 ((:[]) (happy_var_1)
-	)
-happyReduction_69 _  = notHappyAtAll 
+         =  HappyAbsSyn71
+                 ((:[]) (happy_var_1)
+        )
+happyReduction_69 _  = notHappyAtAll
 
 happyReduce_70 = happySpecReduce_3  71 happyReduction_70
 happyReduction_70 (HappyAbsSyn71  happy_var_3)
-	_
-	(HappyAbsSyn75  happy_var_1)
-	 =  HappyAbsSyn71
-		 ((:) (happy_var_1) (happy_var_3)
-	)
-happyReduction_70 _ _ _  = notHappyAtAll 
+        _
+        (HappyAbsSyn75  happy_var_1)
+         =  HappyAbsSyn71
+                 ((:) (happy_var_1) (happy_var_3)
+        )
+happyReduction_70 _ _ _  = notHappyAtAll
 
 happyReduce_71 = happySpecReduce_0  72 happyReduction_71
 happyReduction_71  =  HappyAbsSyn60
-		 (appEPAll myLocation  "[]" []
-	)
+                 (appEPAll myLocation  "[]" []
+        )
 
 happyReduce_72 = happySpecReduce_1  72 happyReduction_72
 happyReduction_72 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAllL myLocation  [happy_var_1]
-	)
-happyReduction_72 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (appEPAllL myLocation  [happy_var_1]
+        )
+happyReduction_72 _  = notHappyAtAll
 
 happyReduce_73 = happySpecReduce_3  72 happyReduction_73
 happyReduction_73 (HappyAbsSyn60  happy_var_3)
-	_
-	(HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation ":"  [happy_var_1,happy_var_3]
-	)
-happyReduction_73 _ _ _  = notHappyAtAll 
+        _
+        (HappyAbsSyn60  happy_var_1)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation ":"  [happy_var_1,happy_var_3]
+        )
+happyReduction_73 _ _ _  = notHappyAtAll
 
 happyReduce_74 = happySpecReduce_0  73 happyReduction_74
 happyReduction_74  =  HappyAbsSyn73
-		 ([]
-	)
+                 ([]
+        )
 
 happyReduce_75 = happySpecReduce_2  73 happyReduction_75
 happyReduction_75 (HappyAbsSyn81  happy_var_2)
-	(HappyAbsSyn73  happy_var_1)
-	 =  HappyAbsSyn73
-		 (flip (:) (happy_var_1) (happy_var_2)
-	)
-happyReduction_75 _ _  = notHappyAtAll 
+        (HappyAbsSyn73  happy_var_1)
+         =  HappyAbsSyn73
+                 (flip (:) (happy_var_1) (happy_var_2)
+        )
+happyReduction_75 _ _  = notHappyAtAll
 
 happyReduce_76 = happySpecReduce_0  74 happyReduction_76
 happyReduction_76  =  HappyAbsSyn60
-		 (appEPAll myLocation  "[]" []
-	)
+                 (appEPAll myLocation  "[]" []
+        )
 
 happyReduce_77 = happySpecReduce_2  74 happyReduction_77
 happyReduction_77 (HappyAbsSyn60  happy_var_2)
-	(HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAllL myLocation  [happy_var_1,happy_var_2]
-	)
-happyReduction_77 _ _  = notHappyAtAll 
+        (HappyAbsSyn60  happy_var_1)
+         =  HappyAbsSyn60
+                 (appEPAllL myLocation  [happy_var_1,happy_var_2]
+        )
+happyReduction_77 _ _  = notHappyAtAll
 
 happyReduce_78 = happyReduce 5 75 happyReduction_78
 happyReduction_78 ((HappyAbsSyn77  happy_var_5) `HappyStk`
-	_ `HappyStk`
-	(HappyAbsSyn83  happy_var_3) `HappyStk`
-	_ `HappyStk`
-	(HappyAbsSyn87  happy_var_1) `HappyStk`
-	happyRest)
-	 = HappyAbsSyn75
-		 (Rule (happy_var_1) (happy_var_3) (happy_var_5)
-	) `HappyStk` happyRest
+        _ `HappyStk`
+        (HappyAbsSyn83  happy_var_3) `HappyStk`
+        _ `HappyStk`
+        (HappyAbsSyn87  happy_var_1) `HappyStk`
+        happyRest)
+         = HappyAbsSyn75
+                 (Rule (happy_var_1) (happy_var_3) (happy_var_5)
+        ) `HappyStk` happyRest
 
 happyReduce_79 = happySpecReduce_2  75 happyReduction_79
 happyReduction_79 (HappyAbsSyn59  happy_var_2)
-	_
-	 =  HappyAbsSyn75
-		 (Comment (happy_var_2)
-	)
-happyReduction_79 _ _  = notHappyAtAll 
+        _
+         =  HappyAbsSyn75
+                 (Comment (happy_var_2)
+        )
+happyReduction_79 _ _  = notHappyAtAll
 
 happyReduce_80 = happySpecReduce_3  75 happyReduction_80
 happyReduction_80 (HappyAbsSyn59  happy_var_3)
-	(HappyAbsSyn59  happy_var_2)
-	_
-	 =  HappyAbsSyn75
-		 (Comments (happy_var_2) (happy_var_3)
-	)
-happyReduction_80 _ _ _  = notHappyAtAll 
+        (HappyAbsSyn59  happy_var_2)
+        _
+         =  HappyAbsSyn75
+                 (Comments (happy_var_2) (happy_var_3)
+        )
+happyReduction_80 _ _ _  = notHappyAtAll
 
 happyReduce_81 = happyReduce 6 75 happyReduction_81
 happyReduction_81 ((HappyAbsSyn73  happy_var_6) `HappyStk`
-	_ `HappyStk`
-	(HappyAbsSyn83  happy_var_4) `HappyStk`
-	_ `HappyStk`
-	(HappyAbsSyn87  happy_var_2) `HappyStk`
-	_ `HappyStk`
-	happyRest)
-	 = HappyAbsSyn75
-		 (Internal (happy_var_2) (happy_var_4) (reverse $ happy_var_6)
-	) `HappyStk` happyRest
+        _ `HappyStk`
+        (HappyAbsSyn83  happy_var_4) `HappyStk`
+        _ `HappyStk`
+        (HappyAbsSyn87  happy_var_2) `HappyStk`
+        _ `HappyStk`
+        happyRest)
+         = HappyAbsSyn75
+                 (Internal (happy_var_2) (happy_var_4) (reverse $ happy_var_6)
+        ) `HappyStk` happyRest
 
 happyReduce_82 = happySpecReduce_3  75 happyReduction_82
 happyReduction_82 (HappyAbsSyn115  happy_var_3)
-	(HappyAbsSyn61  happy_var_2)
-	_
-	 =  HappyAbsSyn75
-		 (Token (happy_var_2) (happy_var_3)
-	)
-happyReduction_82 _ _ _  = notHappyAtAll 
+        (HappyAbsSyn61  happy_var_2)
+        _
+         =  HappyAbsSyn75
+                 (Token (happy_var_2) (happy_var_3)
+        )
+happyReduction_82 _ _ _  = notHappyAtAll
 
 happyReduce_83 = happyReduce 4 75 happyReduction_83
 happyReduction_83 ((HappyAbsSyn115  happy_var_4) `HappyStk`
-	(HappyAbsSyn61  happy_var_3) `HappyStk`
-	_ `HappyStk`
-	_ `HappyStk`
-	happyRest)
-	 = HappyAbsSyn75
-		 (PosToken (happy_var_3) (happy_var_4)
-	) `HappyStk` happyRest
+        (HappyAbsSyn61  happy_var_3) `HappyStk`
+        _ `HappyStk`
+        _ `HappyStk`
+        happyRest)
+         = HappyAbsSyn75
+                 (PosToken (happy_var_3) (happy_var_4)
+        ) `HappyStk` happyRest
 
 happyReduce_84 = happySpecReduce_2  75 happyReduction_84
 happyReduction_84 (HappyAbsSyn123  happy_var_2)
-	_
-	 =  HappyAbsSyn75
-		 (Entryp (happy_var_2)
-	)
-happyReduction_84 _ _  = notHappyAtAll 
+        _
+         =  HappyAbsSyn75
+                 (Entryp (happy_var_2)
+        )
+happyReduction_84 _ _  = notHappyAtAll
 
 happyReduce_85 = happyReduce 4 75 happyReduction_85
 happyReduction_85 ((HappyAbsSyn59  happy_var_4) `HappyStk`
-	(HappyAbsSyn83  happy_var_3) `HappyStk`
-	(HappyAbsSyn113  happy_var_2) `HappyStk`
-	_ `HappyStk`
-	happyRest)
-	 = HappyAbsSyn75
-		 (Separator (happy_var_2) (happy_var_3) (happy_var_4)
-	) `HappyStk` happyRest
+        (HappyAbsSyn83  happy_var_3) `HappyStk`
+        (HappyAbsSyn113  happy_var_2) `HappyStk`
+        _ `HappyStk`
+        happyRest)
+         = HappyAbsSyn75
+                 (Separator (happy_var_2) (happy_var_3) (happy_var_4)
+        ) `HappyStk` happyRest
 
 happyReduce_86 = happyReduce 4 75 happyReduction_86
 happyReduction_86 ((HappyAbsSyn59  happy_var_4) `HappyStk`
-	(HappyAbsSyn83  happy_var_3) `HappyStk`
-	(HappyAbsSyn113  happy_var_2) `HappyStk`
-	_ `HappyStk`
-	happyRest)
-	 = HappyAbsSyn75
-		 (Terminator (happy_var_2) (happy_var_3) (happy_var_4)
-	) `HappyStk` happyRest
+        (HappyAbsSyn83  happy_var_3) `HappyStk`
+        (HappyAbsSyn113  happy_var_2) `HappyStk`
+        _ `HappyStk`
+        happyRest)
+         = HappyAbsSyn75
+                 (Terminator (happy_var_2) (happy_var_3) (happy_var_4)
+        ) `HappyStk` happyRest
 
 happyReduce_87 = happySpecReduce_3  75 happyReduction_87
 happyReduction_87 (HappyAbsSyn63  happy_var_3)
-	(HappyAbsSyn61  happy_var_2)
-	_
-	 =  HappyAbsSyn75
-		 (Coercions (happy_var_2) (happy_var_3)
-	)
-happyReduction_87 _ _ _  = notHappyAtAll 
+        (HappyAbsSyn61  happy_var_2)
+        _
+         =  HappyAbsSyn75
+                 (Coercions (happy_var_2) (happy_var_3)
+        )
+happyReduction_87 _ _ _  = notHappyAtAll
 
 happyReduce_88 = happyReduce 4 75 happyReduction_88
 happyReduction_88 ((HappyAbsSyn79  happy_var_4) `HappyStk`
-	_ `HappyStk`
-	(HappyAbsSyn61  happy_var_2) `HappyStk`
-	_ `HappyStk`
-	happyRest)
-	 = HappyAbsSyn75
-		 (Rules (happy_var_2) (happy_var_4)
-	) `HappyStk` happyRest
+        _ `HappyStk`
+        (HappyAbsSyn61  happy_var_2) `HappyStk`
+        _ `HappyStk`
+        happyRest)
+         = HappyAbsSyn75
+                 (Rules (happy_var_2) (happy_var_4)
+        ) `HappyStk` happyRest
 
 happyReduce_89 = happyReduce 5 75 happyReduction_89
 happyReduction_89 ((HappyAbsSyn101  happy_var_5) `HappyStk`
-	_ `HappyStk`
-	(HappyAbsSyn99  happy_var_3) `HappyStk`
-	(HappyAbsSyn61  happy_var_2) `HappyStk`
-	_ `HappyStk`
-	happyRest)
-	 = HappyAbsSyn75
-		 (Function (happy_var_2) (reverse $ happy_var_3) (happy_var_5)
-	) `HappyStk` happyRest
+        _ `HappyStk`
+        (HappyAbsSyn99  happy_var_3) `HappyStk`
+        (HappyAbsSyn61  happy_var_2) `HappyStk`
+        _ `HappyStk`
+        happyRest)
+         = HappyAbsSyn75
+                 (Function (happy_var_2) (reverse $ happy_var_3) (happy_var_5)
+        ) `HappyStk` happyRest
 
 happyReduce_90 = happyReduce 4 75 happyReduction_90
 happyReduction_90 ((HappyAbsSyn91  happy_var_4) `HappyStk`
-	_ `HappyStk`
-	(HappyAbsSyn61  happy_var_2) `HappyStk`
-	_ `HappyStk`
-	happyRest)
-	 = HappyAbsSyn75
-		 (External (happy_var_2) (happy_var_4)
-	) `HappyStk` happyRest
+        _ `HappyStk`
+        (HappyAbsSyn61  happy_var_2) `HappyStk`
+        _ `HappyStk`
+        happyRest)
+         = HappyAbsSyn75
+                 (External (happy_var_2) (happy_var_4)
+        ) `HappyStk` happyRest
 
 happyReduce_91 = happyReduce 4 75 happyReduction_91
 happyReduction_91 ((HappyAbsSyn59  happy_var_4) `HappyStk`
-	(HappyAbsSyn59  happy_var_3) `HappyStk`
-	(HappyAbsSyn59  happy_var_2) `HappyStk`
-	_ `HappyStk`
-	happyRest)
-	 = HappyAbsSyn75
-		 (AntiQuote (happy_var_2) (happy_var_3) (happy_var_4)
-	) `HappyStk` happyRest
+        (HappyAbsSyn59  happy_var_3) `HappyStk`
+        (HappyAbsSyn59  happy_var_2) `HappyStk`
+        _ `HappyStk`
+        happyRest)
+         = HappyAbsSyn75
+                 (AntiQuote (happy_var_2) (happy_var_3) (happy_var_4)
+        ) `HappyStk` happyRest
 
 happyReduce_92 = happySpecReduce_2  75 happyReduction_92
 happyReduction_92 (HappyAbsSyn123  happy_var_2)
-	_
-	 =  HappyAbsSyn75
-		 (Derive (happy_var_2)
-	)
-happyReduction_92 _ _  = notHappyAtAll 
+        _
+         =  HappyAbsSyn75
+                 (Derive (happy_var_2)
+        )
+happyReduction_92 _ _  = notHappyAtAll
 
 happyReduce_93 = happySpecReduce_2  75 happyReduction_93
 happyReduction_93 (HappyAbsSyn111  happy_var_2)
-	_
-	 =  HappyAbsSyn75
-		 (Layout (happy_var_2)
-	)
-happyReduction_93 _ _  = notHappyAtAll 
+        _
+         =  HappyAbsSyn75
+                 (Layout (happy_var_2)
+        )
+happyReduction_93 _ _  = notHappyAtAll
 
 happyReduce_94 = happySpecReduce_3  75 happyReduction_94
 happyReduction_94 (HappyAbsSyn111  happy_var_3)
-	_
-	_
-	 =  HappyAbsSyn75
-		 (LayoutStop (happy_var_3)
-	)
-happyReduction_94 _ _ _  = notHappyAtAll 
+        _
+        _
+         =  HappyAbsSyn75
+                 (LayoutStop (happy_var_3)
+        )
+happyReduction_94 _ _ _  = notHappyAtAll
 
 happyReduce_95 = happySpecReduce_2  75 happyReduction_95
 happyReduction_95 _
-	_
-	 =  HappyAbsSyn75
-		 (LayoutTop
-	)
+        _
+         =  HappyAbsSyn75
+                 (LayoutTop
+        )
 
 happyReduce_96 = happyReduce 5 76 happyReduction_96
 happyReduction_96 ((HappyAbsSyn60  happy_var_5) `HappyStk`
-	_ `HappyStk`
-	(HappyAbsSyn60  happy_var_3) `HappyStk`
-	_ `HappyStk`
-	(HappyAbsSyn60  happy_var_1) `HappyStk`
-	happyRest)
-	 = HappyAbsSyn60
-		 (appEPAll myLocation "Rule"  [happy_var_1,happy_var_3,happy_var_5]
-	) `HappyStk` happyRest
+        _ `HappyStk`
+        (HappyAbsSyn60  happy_var_3) `HappyStk`
+        _ `HappyStk`
+        (HappyAbsSyn60  happy_var_1) `HappyStk`
+        happyRest)
+         = HappyAbsSyn60
+                 (appEPAll myLocation "Rule"  [happy_var_1,happy_var_3,happy_var_5]
+        ) `HappyStk` happyRest
 
 happyReduce_97 = happySpecReduce_2  76 happyReduction_97
 happyReduction_97 (HappyAbsSyn60  happy_var_2)
-	_
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "Comment"  [happy_var_2]
-	)
-happyReduction_97 _ _  = notHappyAtAll 
+        _
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "Comment"  [happy_var_2]
+        )
+happyReduction_97 _ _  = notHappyAtAll
 
 happyReduce_98 = happySpecReduce_3  76 happyReduction_98
 happyReduction_98 (HappyAbsSyn60  happy_var_3)
-	(HappyAbsSyn60  happy_var_2)
-	_
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "Comments"  [happy_var_2,happy_var_3]
-	)
-happyReduction_98 _ _ _  = notHappyAtAll 
+        (HappyAbsSyn60  happy_var_2)
+        _
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "Comments"  [happy_var_2,happy_var_3]
+        )
+happyReduction_98 _ _ _  = notHappyAtAll
 
 happyReduce_99 = happyReduce 6 76 happyReduction_99
 happyReduction_99 ((HappyAbsSyn60  happy_var_6) `HappyStk`
-	_ `HappyStk`
-	(HappyAbsSyn60  happy_var_4) `HappyStk`
-	_ `HappyStk`
-	(HappyAbsSyn60  happy_var_2) `HappyStk`
-	_ `HappyStk`
-	happyRest)
-	 = HappyAbsSyn60
-		 (appEPAll myLocation "Internal"  [happy_var_2,happy_var_4,happy_var_6]
-	) `HappyStk` happyRest
+        _ `HappyStk`
+        (HappyAbsSyn60  happy_var_4) `HappyStk`
+        _ `HappyStk`
+        (HappyAbsSyn60  happy_var_2) `HappyStk`
+        _ `HappyStk`
+        happyRest)
+         = HappyAbsSyn60
+                 (appEPAll myLocation "Internal"  [happy_var_2,happy_var_4,happy_var_6]
+        ) `HappyStk` happyRest
 
 happyReduce_100 = happySpecReduce_3  76 happyReduction_100
 happyReduction_100 (HappyAbsSyn60  happy_var_3)
-	(HappyAbsSyn60  happy_var_2)
-	_
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "Token"  [happy_var_2,happy_var_3]
-	)
-happyReduction_100 _ _ _  = notHappyAtAll 
+        (HappyAbsSyn60  happy_var_2)
+        _
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "Token"  [happy_var_2,happy_var_3]
+        )
+happyReduction_100 _ _ _  = notHappyAtAll
 
 happyReduce_101 = happyReduce 4 76 happyReduction_101
 happyReduction_101 ((HappyAbsSyn60  happy_var_4) `HappyStk`
-	(HappyAbsSyn60  happy_var_3) `HappyStk`
-	_ `HappyStk`
-	_ `HappyStk`
-	happyRest)
-	 = HappyAbsSyn60
-		 (appEPAll myLocation "PosToken"  [happy_var_3,happy_var_4]
-	) `HappyStk` happyRest
+        (HappyAbsSyn60  happy_var_3) `HappyStk`
+        _ `HappyStk`
+        _ `HappyStk`
+        happyRest)
+         = HappyAbsSyn60
+                 (appEPAll myLocation "PosToken"  [happy_var_3,happy_var_4]
+        ) `HappyStk` happyRest
 
 happyReduce_102 = happySpecReduce_2  76 happyReduction_102
 happyReduction_102 (HappyAbsSyn60  happy_var_2)
-	_
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "Entryp"  [happy_var_2]
-	)
-happyReduction_102 _ _  = notHappyAtAll 
+        _
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "Entryp"  [happy_var_2]
+        )
+happyReduction_102 _ _  = notHappyAtAll
 
 happyReduce_103 = happyReduce 4 76 happyReduction_103
 happyReduction_103 ((HappyAbsSyn60  happy_var_4) `HappyStk`
-	(HappyAbsSyn60  happy_var_3) `HappyStk`
-	(HappyAbsSyn60  happy_var_2) `HappyStk`
-	_ `HappyStk`
-	happyRest)
-	 = HappyAbsSyn60
-		 (appEPAll myLocation "Separator"  [happy_var_2,happy_var_3,happy_var_4]
-	) `HappyStk` happyRest
+        (HappyAbsSyn60  happy_var_3) `HappyStk`
+        (HappyAbsSyn60  happy_var_2) `HappyStk`
+        _ `HappyStk`
+        happyRest)
+         = HappyAbsSyn60
+                 (appEPAll myLocation "Separator"  [happy_var_2,happy_var_3,happy_var_4]
+        ) `HappyStk` happyRest
 
 happyReduce_104 = happyReduce 4 76 happyReduction_104
 happyReduction_104 ((HappyAbsSyn60  happy_var_4) `HappyStk`
-	(HappyAbsSyn60  happy_var_3) `HappyStk`
-	(HappyAbsSyn60  happy_var_2) `HappyStk`
-	_ `HappyStk`
-	happyRest)
-	 = HappyAbsSyn60
-		 (appEPAll myLocation "Terminator"  [happy_var_2,happy_var_3,happy_var_4]
-	) `HappyStk` happyRest
+        (HappyAbsSyn60  happy_var_3) `HappyStk`
+        (HappyAbsSyn60  happy_var_2) `HappyStk`
+        _ `HappyStk`
+        happyRest)
+         = HappyAbsSyn60
+                 (appEPAll myLocation "Terminator"  [happy_var_2,happy_var_3,happy_var_4]
+        ) `HappyStk` happyRest
 
 happyReduce_105 = happySpecReduce_3  76 happyReduction_105
 happyReduction_105 (HappyAbsSyn60  happy_var_3)
-	(HappyAbsSyn60  happy_var_2)
-	_
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "Coercions"  [happy_var_2,happy_var_3]
-	)
-happyReduction_105 _ _ _  = notHappyAtAll 
+        (HappyAbsSyn60  happy_var_2)
+        _
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "Coercions"  [happy_var_2,happy_var_3]
+        )
+happyReduction_105 _ _ _  = notHappyAtAll
 
 happyReduce_106 = happyReduce 4 76 happyReduction_106
 happyReduction_106 ((HappyAbsSyn60  happy_var_4) `HappyStk`
-	_ `HappyStk`
-	(HappyAbsSyn60  happy_var_2) `HappyStk`
-	_ `HappyStk`
-	happyRest)
-	 = HappyAbsSyn60
-		 (appEPAll myLocation "Rules"  [happy_var_2,happy_var_4]
-	) `HappyStk` happyRest
+        _ `HappyStk`
+        (HappyAbsSyn60  happy_var_2) `HappyStk`
+        _ `HappyStk`
+        happyRest)
+         = HappyAbsSyn60
+                 (appEPAll myLocation "Rules"  [happy_var_2,happy_var_4]
+        ) `HappyStk` happyRest
 
 happyReduce_107 = happyReduce 5 76 happyReduction_107
 happyReduction_107 ((HappyAbsSyn60  happy_var_5) `HappyStk`
-	_ `HappyStk`
-	(HappyAbsSyn60  happy_var_3) `HappyStk`
-	(HappyAbsSyn60  happy_var_2) `HappyStk`
-	_ `HappyStk`
-	happyRest)
-	 = HappyAbsSyn60
-		 (appEPAll myLocation "Function"  [happy_var_2,happy_var_3,happy_var_5]
-	) `HappyStk` happyRest
+        _ `HappyStk`
+        (HappyAbsSyn60  happy_var_3) `HappyStk`
+        (HappyAbsSyn60  happy_var_2) `HappyStk`
+        _ `HappyStk`
+        happyRest)
+         = HappyAbsSyn60
+                 (appEPAll myLocation "Function"  [happy_var_2,happy_var_3,happy_var_5]
+        ) `HappyStk` happyRest
 
 happyReduce_108 = happyReduce 4 76 happyReduction_108
 happyReduction_108 ((HappyAbsSyn60  happy_var_4) `HappyStk`
-	_ `HappyStk`
-	(HappyAbsSyn60  happy_var_2) `HappyStk`
-	_ `HappyStk`
-	happyRest)
-	 = HappyAbsSyn60
-		 (appEPAll myLocation "External"  [happy_var_2,happy_var_4]
-	) `HappyStk` happyRest
+        _ `HappyStk`
+        (HappyAbsSyn60  happy_var_2) `HappyStk`
+        _ `HappyStk`
+        happyRest)
+         = HappyAbsSyn60
+                 (appEPAll myLocation "External"  [happy_var_2,happy_var_4]
+        ) `HappyStk` happyRest
 
 happyReduce_109 = happyReduce 4 76 happyReduction_109
 happyReduction_109 ((HappyAbsSyn60  happy_var_4) `HappyStk`
-	(HappyAbsSyn60  happy_var_3) `HappyStk`
-	(HappyAbsSyn60  happy_var_2) `HappyStk`
-	_ `HappyStk`
-	happyRest)
-	 = HappyAbsSyn60
-		 (appEPAll myLocation "AntiQuote"  [happy_var_2,happy_var_3,happy_var_4]
-	) `HappyStk` happyRest
+        (HappyAbsSyn60  happy_var_3) `HappyStk`
+        (HappyAbsSyn60  happy_var_2) `HappyStk`
+        _ `HappyStk`
+        happyRest)
+         = HappyAbsSyn60
+                 (appEPAll myLocation "AntiQuote"  [happy_var_2,happy_var_3,happy_var_4]
+        ) `HappyStk` happyRest
 
 happyReduce_110 = happySpecReduce_2  76 happyReduction_110
 happyReduction_110 (HappyAbsSyn60  happy_var_2)
-	_
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "Derive"  [happy_var_2]
-	)
-happyReduction_110 _ _  = notHappyAtAll 
+        _
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "Derive"  [happy_var_2]
+        )
+happyReduction_110 _ _  = notHappyAtAll
 
 happyReduce_111 = happySpecReduce_2  76 happyReduction_111
 happyReduction_111 (HappyAbsSyn60  happy_var_2)
-	_
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "Layout"  [happy_var_2]
-	)
-happyReduction_111 _ _  = notHappyAtAll 
+        _
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "Layout"  [happy_var_2]
+        )
+happyReduction_111 _ _  = notHappyAtAll
 
 happyReduce_112 = happySpecReduce_3  76 happyReduction_112
 happyReduction_112 (HappyAbsSyn60  happy_var_3)
-	_
-	_
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "LayoutStop"  [happy_var_3]
-	)
-happyReduction_112 _ _ _  = notHappyAtAll 
+        _
+        _
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "LayoutStop"  [happy_var_3]
+        )
+happyReduction_112 _ _ _  = notHappyAtAll
 
 happyReduce_113 = happySpecReduce_2  76 happyReduction_113
 happyReduction_113 _
-	_
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation  "LayoutTop" []
-	)
+        _
+         =  HappyAbsSyn60
+                 (appEPAll myLocation  "LayoutTop" []
+        )
 
 happyReduce_114 = happySpecReduce_1  77 happyReduction_114
 happyReduction_114 (HappyAbsSyn73  happy_var_1)
-	 =  HappyAbsSyn77
-		 (RHS (reverse $ happy_var_1)
-	)
-happyReduction_114 _  = notHappyAtAll 
+         =  HappyAbsSyn77
+                 (RHS (reverse $ happy_var_1)
+        )
+happyReduction_114 _  = notHappyAtAll
 
 happyReduce_115 = happySpecReduce_2  77 happyReduction_115
 happyReduction_115 (HappyAbsSyn115  happy_var_2)
-	_
-	 =  HappyAbsSyn77
-		 (TRHS (happy_var_2)
-	)
-happyReduction_115 _ _  = notHappyAtAll 
+        _
+         =  HappyAbsSyn77
+                 (TRHS (happy_var_2)
+        )
+happyReduction_115 _ _  = notHappyAtAll
 
 happyReduce_116 = happySpecReduce_1  78 happyReduction_116
 happyReduction_116 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "RHS"  [happy_var_1]
-	)
-happyReduction_116 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "RHS"  [happy_var_1]
+        )
+happyReduction_116 _  = notHappyAtAll
 
 happyReduce_117 = happySpecReduce_2  78 happyReduction_117
 happyReduction_117 (HappyAbsSyn60  happy_var_2)
-	_
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "TRHS"  [happy_var_2]
-	)
-happyReduction_117 _ _  = notHappyAtAll 
+        _
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "TRHS"  [happy_var_2]
+        )
+happyReduction_117 _ _  = notHappyAtAll
 
 happyReduce_118 = happySpecReduce_1  79 happyReduction_118
 happyReduction_118 (HappyAbsSyn77  happy_var_1)
-	 =  HappyAbsSyn79
-		 ((:[]) (happy_var_1)
-	)
-happyReduction_118 _  = notHappyAtAll 
+         =  HappyAbsSyn79
+                 ((:[]) (happy_var_1)
+        )
+happyReduction_118 _  = notHappyAtAll
 
 happyReduce_119 = happySpecReduce_3  79 happyReduction_119
 happyReduction_119 (HappyAbsSyn79  happy_var_3)
-	_
-	(HappyAbsSyn77  happy_var_1)
-	 =  HappyAbsSyn79
-		 ((:) (happy_var_1) (happy_var_3)
-	)
-happyReduction_119 _ _ _  = notHappyAtAll 
+        _
+        (HappyAbsSyn77  happy_var_1)
+         =  HappyAbsSyn79
+                 ((:) (happy_var_1) (happy_var_3)
+        )
+happyReduction_119 _ _ _  = notHappyAtAll
 
 happyReduce_120 = happySpecReduce_1  80 happyReduction_120
 happyReduction_120 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAllL myLocation  [happy_var_1]
-	)
-happyReduction_120 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (appEPAllL myLocation  [happy_var_1]
+        )
+happyReduction_120 _  = notHappyAtAll
 
 happyReduce_121 = happySpecReduce_3  80 happyReduction_121
 happyReduction_121 (HappyAbsSyn60  happy_var_3)
-	_
-	(HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation ":"  [happy_var_1,happy_var_3]
-	)
-happyReduction_121 _ _ _  = notHappyAtAll 
+        _
+        (HappyAbsSyn60  happy_var_1)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation ":"  [happy_var_1,happy_var_3]
+        )
+happyReduction_121 _ _ _  = notHappyAtAll
 
 happyReduce_122 = happySpecReduce_1  81 happyReduction_122
 happyReduction_122 (HappyAbsSyn59  happy_var_1)
-	 =  HappyAbsSyn81
-		 (Terminal (happy_var_1)
-	)
-happyReduction_122 _  = notHappyAtAll 
+         =  HappyAbsSyn81
+                 (Terminal (happy_var_1)
+        )
+happyReduction_122 _  = notHappyAtAll
 
 happyReduce_123 = happySpecReduce_1  81 happyReduction_123
 happyReduction_123 (HappyAbsSyn83  happy_var_1)
-	 =  HappyAbsSyn81
-		 (NTerminal (happy_var_1)
-	)
-happyReduction_123 _  = notHappyAtAll 
+         =  HappyAbsSyn81
+                 (NTerminal (happy_var_1)
+        )
+happyReduction_123 _  = notHappyAtAll
 
 happyReduce_124 = happySpecReduce_1  82 happyReduction_124
 happyReduction_124 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "Terminal"  [happy_var_1]
-	)
-happyReduction_124 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "Terminal"  [happy_var_1]
+        )
+happyReduction_124 _  = notHappyAtAll
 
 happyReduce_125 = happySpecReduce_1  82 happyReduction_125
 happyReduction_125 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "NTerminal"  [happy_var_1]
-	)
-happyReduction_125 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "NTerminal"  [happy_var_1]
+        )
+happyReduction_125 _  = notHappyAtAll
 
 happyReduce_126 = happySpecReduce_2  83 happyReduction_126
 happyReduction_126 (HappyAbsSyn83  happy_var_2)
-	_
-	 =  HappyAbsSyn83
-		 (OptCat (happy_var_2)
-	)
-happyReduction_126 _ _  = notHappyAtAll 
+        _
+         =  HappyAbsSyn83
+                 (OptCat (happy_var_2)
+        )
+happyReduction_126 _ _  = notHappyAtAll
 
 happyReduce_127 = happySpecReduce_1  83 happyReduction_127
 happyReduction_127 (HappyAbsSyn83  happy_var_1)
-	 =  HappyAbsSyn83
-		 (happy_var_1
-	)
-happyReduction_127 _  = notHappyAtAll 
+         =  HappyAbsSyn83
+                 (happy_var_1
+        )
+happyReduction_127 _  = notHappyAtAll
 
 happyReduce_128 = happySpecReduce_2  84 happyReduction_128
 happyReduction_128 (HappyAbsSyn60  happy_var_2)
-	_
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "OptCat"  [happy_var_2]
-	)
-happyReduction_128 _ _  = notHappyAtAll 
+        _
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "OptCat"  [happy_var_2]
+        )
+happyReduction_128 _ _  = notHappyAtAll
 
 happyReduce_129 = happySpecReduce_1  84 happyReduction_129
 happyReduction_129 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (happy_var_1
-	)
-happyReduction_129 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (happy_var_1
+        )
+happyReduction_129 _  = notHappyAtAll
 
 happyReduce_130 = happySpecReduce_3  85 happyReduction_130
 happyReduction_130 _
-	(HappyAbsSyn83  happy_var_2)
-	_
-	 =  HappyAbsSyn83
-		 (ListCat (happy_var_2)
-	)
-happyReduction_130 _ _ _  = notHappyAtAll 
+        (HappyAbsSyn83  happy_var_2)
+        _
+         =  HappyAbsSyn83
+                 (ListCat (happy_var_2)
+        )
+happyReduction_130 _ _ _  = notHappyAtAll
 
 happyReduce_131 = happySpecReduce_1  85 happyReduction_131
 happyReduction_131 (HappyAbsSyn61  happy_var_1)
-	 =  HappyAbsSyn83
-		 (IdCat (happy_var_1)
-	)
-happyReduction_131 _  = notHappyAtAll 
+         =  HappyAbsSyn83
+                 (IdCat (happy_var_1)
+        )
+happyReduction_131 _  = notHappyAtAll
 
 happyReduce_132 = happySpecReduce_3  86 happyReduction_132
 happyReduction_132 _
-	(HappyAbsSyn60  happy_var_2)
-	_
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "ListCat"  [happy_var_2]
-	)
-happyReduction_132 _ _ _  = notHappyAtAll 
+        (HappyAbsSyn60  happy_var_2)
+        _
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "ListCat"  [happy_var_2]
+        )
+happyReduction_132 _ _ _  = notHappyAtAll
 
 happyReduce_133 = happySpecReduce_1  86 happyReduction_133
 happyReduction_133 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "IdCat"  [happy_var_1]
-	)
-happyReduction_133 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "IdCat"  [happy_var_1]
+        )
+happyReduction_133 _  = notHappyAtAll
 
 happyReduce_134 = happySpecReduce_1  87 happyReduction_134
 happyReduction_134 (HappyAbsSyn61  happy_var_1)
-	 =  HappyAbsSyn87
-		 (Id (happy_var_1)
-	)
-happyReduction_134 _  = notHappyAtAll 
+         =  HappyAbsSyn87
+                 (Id (happy_var_1)
+        )
+happyReduction_134 _  = notHappyAtAll
 
 happyReduce_135 = happySpecReduce_1  87 happyReduction_135
 happyReduction_135 _
-	 =  HappyAbsSyn87
-		 (Wild
-	)
+         =  HappyAbsSyn87
+                 (Wild
+        )
 
 happyReduce_136 = happySpecReduce_2  87 happyReduction_136
 happyReduction_136 _
-	_
-	 =  HappyAbsSyn87
-		 (ListE
-	)
+        _
+         =  HappyAbsSyn87
+                 (ListE
+        )
 
 happyReduce_137 = happySpecReduce_3  87 happyReduction_137
 happyReduction_137 _
-	_
-	_
-	 =  HappyAbsSyn87
-		 (ListCons
-	)
+        _
+        _
+         =  HappyAbsSyn87
+                 (ListCons
+        )
 
 happyReduce_138 = happyReduce 5 87 happyReduction_138
 happyReduction_138 (_ `HappyStk`
-	_ `HappyStk`
-	_ `HappyStk`
-	_ `HappyStk`
-	_ `HappyStk`
-	happyRest)
-	 = HappyAbsSyn87
-		 (ListOne
-	) `HappyStk` happyRest
+        _ `HappyStk`
+        _ `HappyStk`
+        _ `HappyStk`
+        _ `HappyStk`
+        happyRest)
+         = HappyAbsSyn87
+                 (ListOne
+        ) `HappyStk` happyRest
 
 happyReduce_139 = happySpecReduce_2  87 happyReduction_139
 happyReduction_139 (HappyAbsSyn89  happy_var_2)
-	_
-	 =  HappyAbsSyn87
-		 (Aq (happy_var_2)
-	)
-happyReduction_139 _ _  = notHappyAtAll 
+        _
+         =  HappyAbsSyn87
+                 (Aq (happy_var_2)
+        )
+happyReduction_139 _ _  = notHappyAtAll
 
 happyReduce_140 = happySpecReduce_1  88 happyReduction_140
 happyReduction_140 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "Id"  [happy_var_1]
-	)
-happyReduction_140 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "Id"  [happy_var_1]
+        )
+happyReduction_140 _  = notHappyAtAll
 
 happyReduce_141 = happySpecReduce_1  88 happyReduction_141
 happyReduction_141 _
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation  "Wild" []
-	)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation  "Wild" []
+        )
 
 happyReduce_142 = happySpecReduce_2  88 happyReduction_142
 happyReduction_142 _
-	_
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation  "ListE" []
-	)
+        _
+         =  HappyAbsSyn60
+                 (appEPAll myLocation  "ListE" []
+        )
 
 happyReduce_143 = happySpecReduce_3  88 happyReduction_143
 happyReduction_143 _
-	_
-	_
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation  "ListCons" []
-	)
+        _
+        _
+         =  HappyAbsSyn60
+                 (appEPAll myLocation  "ListCons" []
+        )
 
 happyReduce_144 = happyReduce 5 88 happyReduction_144
 happyReduction_144 (_ `HappyStk`
-	_ `HappyStk`
-	_ `HappyStk`
-	_ `HappyStk`
-	_ `HappyStk`
-	happyRest)
-	 = HappyAbsSyn60
-		 (appEPAll myLocation  "ListOne" []
-	) `HappyStk` happyRest
+        _ `HappyStk`
+        _ `HappyStk`
+        _ `HappyStk`
+        _ `HappyStk`
+        happyRest)
+         = HappyAbsSyn60
+                 (appEPAll myLocation  "ListOne" []
+        ) `HappyStk` happyRest
 
 happyReduce_145 = happySpecReduce_2  88 happyReduction_145
 happyReduction_145 (HappyAbsSyn60  happy_var_2)
-	_
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "Aq"  [happy_var_2]
-	)
-happyReduction_145 _ _  = notHappyAtAll 
+        _
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "Aq"  [happy_var_2]
+        )
+happyReduction_145 _ _  = notHappyAtAll
 
 happyReduce_146 = happySpecReduce_1  89 happyReduction_146
 happyReduction_146 (HappyAbsSyn61  happy_var_1)
-	 =  HappyAbsSyn89
-		 (JIdent (happy_var_1)
-	)
-happyReduction_146 _  = notHappyAtAll 
+         =  HappyAbsSyn89
+                 (JIdent (happy_var_1)
+        )
+happyReduction_146 _  = notHappyAtAll
 
 happyReduce_147 = happySpecReduce_0  89 happyReduction_147
 happyReduction_147  =  HappyAbsSyn89
-		 (NIdent
-	)
+                 (NIdent
+        )
 
 happyReduce_148 = happySpecReduce_1  90 happyReduction_148
 happyReduction_148 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "JIdent"  [happy_var_1]
-	)
-happyReduction_148 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "JIdent"  [happy_var_1]
+        )
+happyReduction_148 _  = notHappyAtAll
 
 happyReduce_149 = happySpecReduce_0  90 happyReduction_149
 happyReduction_149  =  HappyAbsSyn60
-		 (appEPAll myLocation  "NIdent" []
-	)
+                 (appEPAll myLocation  "NIdent" []
+        )
 
 happyReduce_150 = happySpecReduce_2  91 happyReduction_150
 happyReduction_150 (HappyAbsSyn91  happy_var_2)
-	(HappyAbsSyn91  happy_var_1)
-	 =  HappyAbsSyn91
-		 (HsApp (happy_var_1) (happy_var_2)
-	)
-happyReduction_150 _ _  = notHappyAtAll 
+        (HappyAbsSyn91  happy_var_1)
+         =  HappyAbsSyn91
+                 (HsApp (happy_var_1) (happy_var_2)
+        )
+happyReduction_150 _ _  = notHappyAtAll
 
 happyReduce_151 = happySpecReduce_2  92 happyReduction_151
 happyReduction_151 (HappyAbsSyn60  happy_var_2)
-	(HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "HsApp"  [happy_var_1,happy_var_2]
-	)
-happyReduction_151 _ _  = notHappyAtAll 
+        (HappyAbsSyn60  happy_var_1)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "HsApp"  [happy_var_1,happy_var_2]
+        )
+happyReduction_151 _ _  = notHappyAtAll
 
 happyReduce_152 = happySpecReduce_1  93 happyReduction_152
 happyReduction_152 (HappyAbsSyn61  happy_var_1)
-	 =  HappyAbsSyn91
-		 (HsCon (happy_var_1)
-	)
-happyReduction_152 _  = notHappyAtAll 
+         =  HappyAbsSyn91
+                 (HsCon (happy_var_1)
+        )
+happyReduction_152 _  = notHappyAtAll
 
 happyReduce_153 = happySpecReduce_3  93 happyReduction_153
 happyReduction_153 _
-	(HappyAbsSyn95  happy_var_2)
-	_
-	 =  HappyAbsSyn91
-		 (HsTup (happy_var_2)
-	)
-happyReduction_153 _ _ _  = notHappyAtAll 
+        (HappyAbsSyn95  happy_var_2)
+        _
+         =  HappyAbsSyn91
+                 (HsTup (happy_var_2)
+        )
+happyReduction_153 _ _ _  = notHappyAtAll
 
 happyReduce_154 = happySpecReduce_3  93 happyReduction_154
 happyReduction_154 _
-	(HappyAbsSyn91  happy_var_2)
-	_
-	 =  HappyAbsSyn91
-		 (HsList (happy_var_2)
-	)
-happyReduction_154 _ _ _  = notHappyAtAll 
+        (HappyAbsSyn91  happy_var_2)
+        _
+         =  HappyAbsSyn91
+                 (HsList (happy_var_2)
+        )
+happyReduction_154 _ _ _  = notHappyAtAll
 
 happyReduce_155 = happySpecReduce_1  94 happyReduction_155
 happyReduction_155 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "HsCon"  [happy_var_1]
-	)
-happyReduction_155 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "HsCon"  [happy_var_1]
+        )
+happyReduction_155 _  = notHappyAtAll
 
 happyReduce_156 = happySpecReduce_3  94 happyReduction_156
 happyReduction_156 _
-	(HappyAbsSyn60  happy_var_2)
-	_
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "HsTup"  [happy_var_2]
-	)
-happyReduction_156 _ _ _  = notHappyAtAll 
+        (HappyAbsSyn60  happy_var_2)
+        _
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "HsTup"  [happy_var_2]
+        )
+happyReduction_156 _ _ _  = notHappyAtAll
 
 happyReduce_157 = happySpecReduce_3  94 happyReduction_157
 happyReduction_157 _
-	(HappyAbsSyn60  happy_var_2)
-	_
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "HsList"  [happy_var_2]
-	)
-happyReduction_157 _ _ _  = notHappyAtAll 
+        (HappyAbsSyn60  happy_var_2)
+        _
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "HsList"  [happy_var_2]
+        )
+happyReduction_157 _ _ _  = notHappyAtAll
 
 happyReduce_158 = happySpecReduce_1  95 happyReduction_158
 happyReduction_158 (HappyAbsSyn91  happy_var_1)
-	 =  HappyAbsSyn95
-		 ((:[]) (happy_var_1)
-	)
-happyReduction_158 _  = notHappyAtAll 
+         =  HappyAbsSyn95
+                 ((:[]) (happy_var_1)
+        )
+happyReduction_158 _  = notHappyAtAll
 
 happyReduce_159 = happySpecReduce_3  95 happyReduction_159
 happyReduction_159 (HappyAbsSyn95  happy_var_3)
-	_
-	(HappyAbsSyn91  happy_var_1)
-	 =  HappyAbsSyn95
-		 ((:) (happy_var_1) (happy_var_3)
-	)
-happyReduction_159 _ _ _  = notHappyAtAll 
+        _
+        (HappyAbsSyn91  happy_var_1)
+         =  HappyAbsSyn95
+                 ((:) (happy_var_1) (happy_var_3)
+        )
+happyReduction_159 _ _ _  = notHappyAtAll
 
 happyReduce_160 = happySpecReduce_1  96 happyReduction_160
 happyReduction_160 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAllL myLocation  [happy_var_1]
-	)
-happyReduction_160 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (appEPAllL myLocation  [happy_var_1]
+        )
+happyReduction_160 _  = notHappyAtAll
 
 happyReduce_161 = happySpecReduce_3  96 happyReduction_161
 happyReduction_161 (HappyAbsSyn60  happy_var_3)
-	_
-	(HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation ":"  [happy_var_1,happy_var_3]
-	)
-happyReduction_161 _ _ _  = notHappyAtAll 
+        _
+        (HappyAbsSyn60  happy_var_1)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation ":"  [happy_var_1,happy_var_3]
+        )
+happyReduction_161 _ _ _  = notHappyAtAll
 
 happyReduce_162 = happySpecReduce_1  97 happyReduction_162
 happyReduction_162 (HappyAbsSyn61  happy_var_1)
-	 =  HappyAbsSyn97
-		 (Arg (happy_var_1)
-	)
-happyReduction_162 _  = notHappyAtAll 
+         =  HappyAbsSyn97
+                 (Arg (happy_var_1)
+        )
+happyReduction_162 _  = notHappyAtAll
 
 happyReduce_163 = happySpecReduce_1  98 happyReduction_163
 happyReduction_163 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "Arg"  [happy_var_1]
-	)
-happyReduction_163 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "Arg"  [happy_var_1]
+        )
+happyReduction_163 _  = notHappyAtAll
 
 happyReduce_164 = happySpecReduce_0  99 happyReduction_164
 happyReduction_164  =  HappyAbsSyn99
-		 ([]
-	)
+                 ([]
+        )
 
 happyReduce_165 = happySpecReduce_2  99 happyReduction_165
 happyReduction_165 (HappyAbsSyn97  happy_var_2)
-	(HappyAbsSyn99  happy_var_1)
-	 =  HappyAbsSyn99
-		 (flip (:) (happy_var_1) (happy_var_2)
-	)
-happyReduction_165 _ _  = notHappyAtAll 
+        (HappyAbsSyn99  happy_var_1)
+         =  HappyAbsSyn99
+                 (flip (:) (happy_var_1) (happy_var_2)
+        )
+happyReduction_165 _ _  = notHappyAtAll
 
 happyReduce_166 = happySpecReduce_0  100 happyReduction_166
 happyReduction_166  =  HappyAbsSyn60
-		 (appEPAll myLocation  "[]" []
-	)
+                 (appEPAll myLocation  "[]" []
+        )
 
 happyReduce_167 = happySpecReduce_2  100 happyReduction_167
 happyReduction_167 (HappyAbsSyn60  happy_var_2)
-	(HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAllL myLocation  [happy_var_1,happy_var_2]
-	)
-happyReduction_167 _ _  = notHappyAtAll 
+        (HappyAbsSyn60  happy_var_1)
+         =  HappyAbsSyn60
+                 (appEPAllL myLocation  [happy_var_1,happy_var_2]
+        )
+happyReduction_167 _ _  = notHappyAtAll
 
 happyReduce_168 = happySpecReduce_3  101 happyReduction_168
 happyReduction_168 (HappyAbsSyn101  happy_var_3)
-	_
-	(HappyAbsSyn101  happy_var_1)
-	 =  HappyAbsSyn101
-		 (Cons (happy_var_1) (happy_var_3)
-	)
-happyReduction_168 _ _ _  = notHappyAtAll 
+        _
+        (HappyAbsSyn101  happy_var_1)
+         =  HappyAbsSyn101
+                 (Cons (happy_var_1) (happy_var_3)
+        )
+happyReduction_168 _ _ _  = notHappyAtAll
 
 happyReduce_169 = happySpecReduce_1  101 happyReduction_169
 happyReduction_169 (HappyAbsSyn101  happy_var_1)
-	 =  HappyAbsSyn101
-		 (happy_var_1
-	)
-happyReduction_169 _  = notHappyAtAll 
+         =  HappyAbsSyn101
+                 (happy_var_1
+        )
+happyReduction_169 _  = notHappyAtAll
 
 happyReduce_170 = happySpecReduce_3  102 happyReduction_170
 happyReduction_170 (HappyAbsSyn60  happy_var_3)
-	_
-	(HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "Cons"  [happy_var_1,happy_var_3]
-	)
-happyReduction_170 _ _ _  = notHappyAtAll 
+        _
+        (HappyAbsSyn60  happy_var_1)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "Cons"  [happy_var_1,happy_var_3]
+        )
+happyReduction_170 _ _ _  = notHappyAtAll
 
 happyReduce_171 = happySpecReduce_1  102 happyReduction_171
 happyReduction_171 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (happy_var_1
-	)
-happyReduction_171 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (happy_var_1
+        )
+happyReduction_171 _  = notHappyAtAll
 
 happyReduce_172 = happySpecReduce_2  103 happyReduction_172
 happyReduction_172 (HappyAbsSyn107  happy_var_2)
-	(HappyAbsSyn61  happy_var_1)
-	 =  HappyAbsSyn101
-		 (App (happy_var_1) (happy_var_2)
-	)
-happyReduction_172 _ _  = notHappyAtAll 
+        (HappyAbsSyn61  happy_var_1)
+         =  HappyAbsSyn101
+                 (App (happy_var_1) (happy_var_2)
+        )
+happyReduction_172 _ _  = notHappyAtAll
 
 happyReduce_173 = happySpecReduce_1  103 happyReduction_173
 happyReduction_173 (HappyAbsSyn101  happy_var_1)
-	 =  HappyAbsSyn101
-		 (happy_var_1
-	)
-happyReduction_173 _  = notHappyAtAll 
+         =  HappyAbsSyn101
+                 (happy_var_1
+        )
+happyReduction_173 _  = notHappyAtAll
 
 happyReduce_174 = happySpecReduce_2  104 happyReduction_174
 happyReduction_174 (HappyAbsSyn60  happy_var_2)
-	(HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "App"  [happy_var_1,happy_var_2]
-	)
-happyReduction_174 _ _  = notHappyAtAll 
+        (HappyAbsSyn60  happy_var_1)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "App"  [happy_var_1,happy_var_2]
+        )
+happyReduction_174 _ _  = notHappyAtAll
 
 happyReduce_175 = happySpecReduce_1  104 happyReduction_175
 happyReduction_175 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (happy_var_1
-	)
-happyReduction_175 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (happy_var_1
+        )
+happyReduction_175 _  = notHappyAtAll
 
 happyReduce_176 = happySpecReduce_1  105 happyReduction_176
 happyReduction_176 (HappyAbsSyn61  happy_var_1)
-	 =  HappyAbsSyn101
-		 (Var (happy_var_1)
-	)
-happyReduction_176 _  = notHappyAtAll 
+         =  HappyAbsSyn101
+                 (Var (happy_var_1)
+        )
+happyReduction_176 _  = notHappyAtAll
 
 happyReduce_177 = happySpecReduce_1  105 happyReduction_177
 happyReduction_177 (HappyAbsSyn63  happy_var_1)
-	 =  HappyAbsSyn101
-		 (LitInt (happy_var_1)
-	)
-happyReduction_177 _  = notHappyAtAll 
+         =  HappyAbsSyn101
+                 (LitInt (happy_var_1)
+        )
+happyReduction_177 _  = notHappyAtAll
 
 happyReduce_178 = happySpecReduce_1  105 happyReduction_178
 happyReduction_178 (HappyAbsSyn65  happy_var_1)
-	 =  HappyAbsSyn101
-		 (LitChar (happy_var_1)
-	)
-happyReduction_178 _  = notHappyAtAll 
+         =  HappyAbsSyn101
+                 (LitChar (happy_var_1)
+        )
+happyReduction_178 _  = notHappyAtAll
 
 happyReduce_179 = happySpecReduce_1  105 happyReduction_179
 happyReduction_179 (HappyAbsSyn59  happy_var_1)
-	 =  HappyAbsSyn101
-		 (LitString (happy_var_1)
-	)
-happyReduction_179 _  = notHappyAtAll 
+         =  HappyAbsSyn101
+                 (LitString (happy_var_1)
+        )
+happyReduction_179 _  = notHappyAtAll
 
 happyReduce_180 = happySpecReduce_1  105 happyReduction_180
 happyReduction_180 (HappyAbsSyn67  happy_var_1)
-	 =  HappyAbsSyn101
-		 (LitDouble (happy_var_1)
-	)
-happyReduction_180 _  = notHappyAtAll 
+         =  HappyAbsSyn101
+                 (LitDouble (happy_var_1)
+        )
+happyReduction_180 _  = notHappyAtAll
 
 happyReduce_181 = happySpecReduce_3  105 happyReduction_181
 happyReduction_181 _
-	(HappyAbsSyn107  happy_var_2)
-	_
-	 =  HappyAbsSyn101
-		 (List (happy_var_2)
-	)
-happyReduction_181 _ _ _  = notHappyAtAll 
+        (HappyAbsSyn107  happy_var_2)
+        _
+         =  HappyAbsSyn101
+                 (List (happy_var_2)
+        )
+happyReduction_181 _ _ _  = notHappyAtAll
 
 happyReduce_182 = happySpecReduce_3  105 happyReduction_182
 happyReduction_182 _
-	(HappyAbsSyn101  happy_var_2)
-	_
-	 =  HappyAbsSyn101
-		 (happy_var_2
-	)
-happyReduction_182 _ _ _  = notHappyAtAll 
+        (HappyAbsSyn101  happy_var_2)
+        _
+         =  HappyAbsSyn101
+                 (happy_var_2
+        )
+happyReduction_182 _ _ _  = notHappyAtAll
 
 happyReduce_183 = happySpecReduce_1  106 happyReduction_183
 happyReduction_183 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "Var"  [happy_var_1]
-	)
-happyReduction_183 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "Var"  [happy_var_1]
+        )
+happyReduction_183 _  = notHappyAtAll
 
 happyReduce_184 = happySpecReduce_1  106 happyReduction_184
 happyReduction_184 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "LitInt"  [happy_var_1]
-	)
-happyReduction_184 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "LitInt"  [happy_var_1]
+        )
+happyReduction_184 _  = notHappyAtAll
 
 happyReduce_185 = happySpecReduce_1  106 happyReduction_185
 happyReduction_185 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "LitChar"  [happy_var_1]
-	)
-happyReduction_185 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "LitChar"  [happy_var_1]
+        )
+happyReduction_185 _  = notHappyAtAll
 
 happyReduce_186 = happySpecReduce_1  106 happyReduction_186
 happyReduction_186 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "LitString"  [happy_var_1]
-	)
-happyReduction_186 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "LitString"  [happy_var_1]
+        )
+happyReduction_186 _  = notHappyAtAll
 
 happyReduce_187 = happySpecReduce_1  106 happyReduction_187
 happyReduction_187 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "LitDouble"  [happy_var_1]
-	)
-happyReduction_187 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "LitDouble"  [happy_var_1]
+        )
+happyReduction_187 _  = notHappyAtAll
 
 happyReduce_188 = happySpecReduce_3  106 happyReduction_188
 happyReduction_188 _
-	(HappyAbsSyn60  happy_var_2)
-	_
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "List"  [happy_var_2]
-	)
-happyReduction_188 _ _ _  = notHappyAtAll 
+        (HappyAbsSyn60  happy_var_2)
+        _
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "List"  [happy_var_2]
+        )
+happyReduction_188 _ _ _  = notHappyAtAll
 
 happyReduce_189 = happySpecReduce_3  106 happyReduction_189
 happyReduction_189 _
-	(HappyAbsSyn60  happy_var_2)
-	_
-	 =  HappyAbsSyn60
-		 (happy_var_2
-	)
-happyReduction_189 _ _ _  = notHappyAtAll 
+        (HappyAbsSyn60  happy_var_2)
+        _
+         =  HappyAbsSyn60
+                 (happy_var_2
+        )
+happyReduction_189 _ _ _  = notHappyAtAll
 
 happyReduce_190 = happySpecReduce_1  107 happyReduction_190
 happyReduction_190 (HappyAbsSyn101  happy_var_1)
-	 =  HappyAbsSyn107
-		 ((:[]) (happy_var_1)
-	)
-happyReduction_190 _  = notHappyAtAll 
+         =  HappyAbsSyn107
+                 ((:[]) (happy_var_1)
+        )
+happyReduction_190 _  = notHappyAtAll
 
 happyReduce_191 = happySpecReduce_2  107 happyReduction_191
 happyReduction_191 (HappyAbsSyn107  happy_var_2)
-	(HappyAbsSyn101  happy_var_1)
-	 =  HappyAbsSyn107
-		 ((:) (happy_var_1) (happy_var_2)
-	)
-happyReduction_191 _ _  = notHappyAtAll 
+        (HappyAbsSyn101  happy_var_1)
+         =  HappyAbsSyn107
+                 ((:) (happy_var_1) (happy_var_2)
+        )
+happyReduction_191 _ _  = notHappyAtAll
 
 happyReduce_192 = happySpecReduce_1  108 happyReduction_192
 happyReduction_192 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAllL myLocation  [happy_var_1]
-	)
-happyReduction_192 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (appEPAllL myLocation  [happy_var_1]
+        )
+happyReduction_192 _  = notHappyAtAll
 
 happyReduce_193 = happySpecReduce_2  108 happyReduction_193
 happyReduction_193 (HappyAbsSyn60  happy_var_2)
-	(HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation ":"  [happy_var_1,happy_var_2]
-	)
-happyReduction_193 _ _  = notHappyAtAll 
+        (HappyAbsSyn60  happy_var_1)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation ":"  [happy_var_1,happy_var_2]
+        )
+happyReduction_193 _ _  = notHappyAtAll
 
 happyReduce_194 = happySpecReduce_0  109 happyReduction_194
 happyReduction_194  =  HappyAbsSyn107
-		 ([]
-	)
+                 ([]
+        )
 
 happyReduce_195 = happySpecReduce_1  109 happyReduction_195
 happyReduction_195 (HappyAbsSyn101  happy_var_1)
-	 =  HappyAbsSyn107
-		 ((:[]) (happy_var_1)
-	)
-happyReduction_195 _  = notHappyAtAll 
+         =  HappyAbsSyn107
+                 ((:[]) (happy_var_1)
+        )
+happyReduction_195 _  = notHappyAtAll
 
 happyReduce_196 = happySpecReduce_3  109 happyReduction_196
 happyReduction_196 (HappyAbsSyn107  happy_var_3)
-	_
-	(HappyAbsSyn101  happy_var_1)
-	 =  HappyAbsSyn107
-		 ((:) (happy_var_1) (happy_var_3)
-	)
-happyReduction_196 _ _ _  = notHappyAtAll 
+        _
+        (HappyAbsSyn101  happy_var_1)
+         =  HappyAbsSyn107
+                 ((:) (happy_var_1) (happy_var_3)
+        )
+happyReduction_196 _ _ _  = notHappyAtAll
 
 happyReduce_197 = happySpecReduce_0  110 happyReduction_197
 happyReduction_197  =  HappyAbsSyn60
-		 (appEPAll myLocation  "[]" []
-	)
+                 (appEPAll myLocation  "[]" []
+        )
 
 happyReduce_198 = happySpecReduce_1  110 happyReduction_198
 happyReduction_198 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAllL myLocation  [happy_var_1]
-	)
-happyReduction_198 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (appEPAllL myLocation  [happy_var_1]
+        )
+happyReduction_198 _  = notHappyAtAll
 
 happyReduce_199 = happySpecReduce_3  110 happyReduction_199
 happyReduction_199 (HappyAbsSyn60  happy_var_3)
-	_
-	(HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation ":"  [happy_var_1,happy_var_3]
-	)
-happyReduction_199 _ _ _  = notHappyAtAll 
+        _
+        (HappyAbsSyn60  happy_var_1)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation ":"  [happy_var_1,happy_var_3]
+        )
+happyReduction_199 _ _ _  = notHappyAtAll
 
 happyReduce_200 = happySpecReduce_1  111 happyReduction_200
 happyReduction_200 (HappyAbsSyn59  happy_var_1)
-	 =  HappyAbsSyn111
-		 ((:[]) (happy_var_1)
-	)
-happyReduction_200 _  = notHappyAtAll 
+         =  HappyAbsSyn111
+                 ((:[]) (happy_var_1)
+        )
+happyReduction_200 _  = notHappyAtAll
 
 happyReduce_201 = happySpecReduce_3  111 happyReduction_201
 happyReduction_201 (HappyAbsSyn111  happy_var_3)
-	_
-	(HappyAbsSyn59  happy_var_1)
-	 =  HappyAbsSyn111
-		 ((:) (happy_var_1) (happy_var_3)
-	)
-happyReduction_201 _ _ _  = notHappyAtAll 
+        _
+        (HappyAbsSyn59  happy_var_1)
+         =  HappyAbsSyn111
+                 ((:) (happy_var_1) (happy_var_3)
+        )
+happyReduction_201 _ _ _  = notHappyAtAll
 
 happyReduce_202 = happySpecReduce_1  112 happyReduction_202
 happyReduction_202 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAllL myLocation  [happy_var_1]
-	)
-happyReduction_202 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (appEPAllL myLocation  [happy_var_1]
+        )
+happyReduction_202 _  = notHappyAtAll
 
 happyReduce_203 = happySpecReduce_3  112 happyReduction_203
 happyReduction_203 (HappyAbsSyn60  happy_var_3)
-	_
-	(HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation ":"  [happy_var_1,happy_var_3]
-	)
-happyReduction_203 _ _ _  = notHappyAtAll 
+        _
+        (HappyAbsSyn60  happy_var_1)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation ":"  [happy_var_1,happy_var_3]
+        )
+happyReduction_203 _ _ _  = notHappyAtAll
 
 happyReduce_204 = happySpecReduce_1  113 happyReduction_204
 happyReduction_204 _
-	 =  HappyAbsSyn113
-		 (MNonempty
-	)
+         =  HappyAbsSyn113
+                 (MNonempty
+        )
 
 happyReduce_205 = happySpecReduce_0  113 happyReduction_205
 happyReduction_205  =  HappyAbsSyn113
-		 (MEmpty
-	)
+                 (MEmpty
+        )
 
 happyReduce_206 = happySpecReduce_1  114 happyReduction_206
 happyReduction_206 _
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation  "MNonempty" []
-	)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation  "MNonempty" []
+        )
 
 happyReduce_207 = happySpecReduce_0  114 happyReduction_207
 happyReduction_207  =  HappyAbsSyn60
-		 (appEPAll myLocation  "MEmpty" []
-	)
+                 (appEPAll myLocation  "MEmpty" []
+        )
 
 happyReduce_208 = happySpecReduce_2  115 happyReduction_208
 happyReduction_208 (HappyAbsSyn115  happy_var_2)
-	(HappyAbsSyn115  happy_var_1)
-	 =  HappyAbsSyn115
-		 (RSeq (happy_var_1) (happy_var_2)
-	)
-happyReduction_208 _ _  = notHappyAtAll 
+        (HappyAbsSyn115  happy_var_1)
+         =  HappyAbsSyn115
+                 (RSeq (happy_var_1) (happy_var_2)
+        )
+happyReduction_208 _ _  = notHappyAtAll
 
 happyReduce_209 = happySpecReduce_1  115 happyReduction_209
 happyReduction_209 (HappyAbsSyn115  happy_var_1)
-	 =  HappyAbsSyn115
-		 (happy_var_1
-	)
-happyReduction_209 _  = notHappyAtAll 
+         =  HappyAbsSyn115
+                 (happy_var_1
+        )
+happyReduction_209 _  = notHappyAtAll
 
 happyReduce_210 = happySpecReduce_2  116 happyReduction_210
 happyReduction_210 (HappyAbsSyn60  happy_var_2)
-	(HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "RSeq"  [happy_var_1,happy_var_2]
-	)
-happyReduction_210 _ _  = notHappyAtAll 
+        (HappyAbsSyn60  happy_var_1)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "RSeq"  [happy_var_1,happy_var_2]
+        )
+happyReduction_210 _ _  = notHappyAtAll
 
 happyReduce_211 = happySpecReduce_1  116 happyReduction_211
 happyReduction_211 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (happy_var_1
-	)
-happyReduction_211 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (happy_var_1
+        )
+happyReduction_211 _  = notHappyAtAll
 
 happyReduce_212 = happySpecReduce_3  117 happyReduction_212
 happyReduction_212 (HappyAbsSyn115  happy_var_3)
-	_
-	(HappyAbsSyn115  happy_var_1)
-	 =  HappyAbsSyn115
-		 (RAlt (happy_var_1) (happy_var_3)
-	)
-happyReduction_212 _ _ _  = notHappyAtAll 
+        _
+        (HappyAbsSyn115  happy_var_1)
+         =  HappyAbsSyn115
+                 (RAlt (happy_var_1) (happy_var_3)
+        )
+happyReduction_212 _ _ _  = notHappyAtAll
 
 happyReduce_213 = happySpecReduce_3  117 happyReduction_213
 happyReduction_213 (HappyAbsSyn115  happy_var_3)
-	_
-	(HappyAbsSyn115  happy_var_1)
-	 =  HappyAbsSyn115
-		 (RMinus (happy_var_1) (happy_var_3)
-	)
-happyReduction_213 _ _ _  = notHappyAtAll 
+        _
+        (HappyAbsSyn115  happy_var_1)
+         =  HappyAbsSyn115
+                 (RMinus (happy_var_1) (happy_var_3)
+        )
+happyReduction_213 _ _ _  = notHappyAtAll
 
 happyReduce_214 = happySpecReduce_1  117 happyReduction_214
 happyReduction_214 (HappyAbsSyn115  happy_var_1)
-	 =  HappyAbsSyn115
-		 (happy_var_1
-	)
-happyReduction_214 _  = notHappyAtAll 
+         =  HappyAbsSyn115
+                 (happy_var_1
+        )
+happyReduction_214 _  = notHappyAtAll
 
 happyReduce_215 = happySpecReduce_3  118 happyReduction_215
 happyReduction_215 (HappyAbsSyn60  happy_var_3)
-	_
-	(HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "RAlt"  [happy_var_1,happy_var_3]
-	)
-happyReduction_215 _ _ _  = notHappyAtAll 
+        _
+        (HappyAbsSyn60  happy_var_1)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "RAlt"  [happy_var_1,happy_var_3]
+        )
+happyReduction_215 _ _ _  = notHappyAtAll
 
 happyReduce_216 = happySpecReduce_3  118 happyReduction_216
 happyReduction_216 (HappyAbsSyn60  happy_var_3)
-	_
-	(HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "RMinus"  [happy_var_1,happy_var_3]
-	)
-happyReduction_216 _ _ _  = notHappyAtAll 
+        _
+        (HappyAbsSyn60  happy_var_1)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "RMinus"  [happy_var_1,happy_var_3]
+        )
+happyReduction_216 _ _ _  = notHappyAtAll
 
 happyReduce_217 = happySpecReduce_1  118 happyReduction_217
 happyReduction_217 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (happy_var_1
-	)
-happyReduction_217 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (happy_var_1
+        )
+happyReduction_217 _  = notHappyAtAll
 
 happyReduce_218 = happySpecReduce_2  119 happyReduction_218
 happyReduction_218 _
-	(HappyAbsSyn115  happy_var_1)
-	 =  HappyAbsSyn115
-		 (RStar (happy_var_1)
-	)
-happyReduction_218 _ _  = notHappyAtAll 
+        (HappyAbsSyn115  happy_var_1)
+         =  HappyAbsSyn115
+                 (RStar (happy_var_1)
+        )
+happyReduction_218 _ _  = notHappyAtAll
 
 happyReduce_219 = happySpecReduce_2  119 happyReduction_219
 happyReduction_219 _
-	(HappyAbsSyn115  happy_var_1)
-	 =  HappyAbsSyn115
-		 (RPlus (happy_var_1)
-	)
-happyReduction_219 _ _  = notHappyAtAll 
+        (HappyAbsSyn115  happy_var_1)
+         =  HappyAbsSyn115
+                 (RPlus (happy_var_1)
+        )
+happyReduction_219 _ _  = notHappyAtAll
 
 happyReduce_220 = happySpecReduce_2  119 happyReduction_220
 happyReduction_220 _
-	(HappyAbsSyn115  happy_var_1)
-	 =  HappyAbsSyn115
-		 (ROpt (happy_var_1)
-	)
-happyReduction_220 _ _  = notHappyAtAll 
+        (HappyAbsSyn115  happy_var_1)
+         =  HappyAbsSyn115
+                 (ROpt (happy_var_1)
+        )
+happyReduction_220 _ _  = notHappyAtAll
 
 happyReduce_221 = happySpecReduce_1  119 happyReduction_221
 happyReduction_221 _
-	 =  HappyAbsSyn115
-		 (REps
-	)
+         =  HappyAbsSyn115
+                 (REps
+        )
 
 happyReduce_222 = happySpecReduce_1  119 happyReduction_222
 happyReduction_222 (HappyAbsSyn65  happy_var_1)
-	 =  HappyAbsSyn115
-		 (RChar (happy_var_1)
-	)
-happyReduction_222 _  = notHappyAtAll 
+         =  HappyAbsSyn115
+                 (RChar (happy_var_1)
+        )
+happyReduction_222 _  = notHappyAtAll
 
 happyReduce_223 = happySpecReduce_3  119 happyReduction_223
 happyReduction_223 _
-	(HappyAbsSyn59  happy_var_2)
-	_
-	 =  HappyAbsSyn115
-		 (RAlts (happy_var_2)
-	)
-happyReduction_223 _ _ _  = notHappyAtAll 
+        (HappyAbsSyn59  happy_var_2)
+        _
+         =  HappyAbsSyn115
+                 (RAlts (happy_var_2)
+        )
+happyReduction_223 _ _ _  = notHappyAtAll
 
 happyReduce_224 = happySpecReduce_3  119 happyReduction_224
 happyReduction_224 _
-	(HappyAbsSyn59  happy_var_2)
-	_
-	 =  HappyAbsSyn115
-		 (RSeqs (happy_var_2)
-	)
-happyReduction_224 _ _ _  = notHappyAtAll 
+        (HappyAbsSyn59  happy_var_2)
+        _
+         =  HappyAbsSyn115
+                 (RSeqs (happy_var_2)
+        )
+happyReduction_224 _ _ _  = notHappyAtAll
 
 happyReduce_225 = happySpecReduce_1  119 happyReduction_225
 happyReduction_225 _
-	 =  HappyAbsSyn115
-		 (RDigit
-	)
+         =  HappyAbsSyn115
+                 (RDigit
+        )
 
 happyReduce_226 = happySpecReduce_1  119 happyReduction_226
 happyReduction_226 _
-	 =  HappyAbsSyn115
-		 (RLetter
-	)
+         =  HappyAbsSyn115
+                 (RLetter
+        )
 
 happyReduce_227 = happySpecReduce_1  119 happyReduction_227
 happyReduction_227 _
-	 =  HappyAbsSyn115
-		 (RUpper
-	)
+         =  HappyAbsSyn115
+                 (RUpper
+        )
 
 happyReduce_228 = happySpecReduce_1  119 happyReduction_228
 happyReduction_228 _
-	 =  HappyAbsSyn115
-		 (RLower
-	)
+         =  HappyAbsSyn115
+                 (RLower
+        )
 
 happyReduce_229 = happySpecReduce_1  119 happyReduction_229
 happyReduction_229 _
-	 =  HappyAbsSyn115
-		 (RAny
-	)
+         =  HappyAbsSyn115
+                 (RAny
+        )
 
 happyReduce_230 = happySpecReduce_3  119 happyReduction_230
 happyReduction_230 _
-	(HappyAbsSyn115  happy_var_2)
-	_
-	 =  HappyAbsSyn115
-		 (happy_var_2
-	)
-happyReduction_230 _ _ _  = notHappyAtAll 
+        (HappyAbsSyn115  happy_var_2)
+        _
+         =  HappyAbsSyn115
+                 (happy_var_2
+        )
+happyReduction_230 _ _ _  = notHappyAtAll
 
 happyReduce_231 = happySpecReduce_2  120 happyReduction_231
 happyReduction_231 _
-	(HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "RStar"  [happy_var_1]
-	)
-happyReduction_231 _ _  = notHappyAtAll 
+        (HappyAbsSyn60  happy_var_1)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "RStar"  [happy_var_1]
+        )
+happyReduction_231 _ _  = notHappyAtAll
 
 happyReduce_232 = happySpecReduce_2  120 happyReduction_232
 happyReduction_232 _
-	(HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "RPlus"  [happy_var_1]
-	)
-happyReduction_232 _ _  = notHappyAtAll 
+        (HappyAbsSyn60  happy_var_1)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "RPlus"  [happy_var_1]
+        )
+happyReduction_232 _ _  = notHappyAtAll
 
 happyReduce_233 = happySpecReduce_2  120 happyReduction_233
 happyReduction_233 _
-	(HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "ROpt"  [happy_var_1]
-	)
-happyReduction_233 _ _  = notHappyAtAll 
+        (HappyAbsSyn60  happy_var_1)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "ROpt"  [happy_var_1]
+        )
+happyReduction_233 _ _  = notHappyAtAll
 
 happyReduce_234 = happySpecReduce_1  120 happyReduction_234
 happyReduction_234 _
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation  "REps" []
-	)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation  "REps" []
+        )
 
 happyReduce_235 = happySpecReduce_1  120 happyReduction_235
 happyReduction_235 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "RChar"  [happy_var_1]
-	)
-happyReduction_235 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "RChar"  [happy_var_1]
+        )
+happyReduction_235 _  = notHappyAtAll
 
 happyReduce_236 = happySpecReduce_3  120 happyReduction_236
 happyReduction_236 _
-	(HappyAbsSyn60  happy_var_2)
-	_
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "RAlts"  [happy_var_2]
-	)
-happyReduction_236 _ _ _  = notHappyAtAll 
+        (HappyAbsSyn60  happy_var_2)
+        _
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "RAlts"  [happy_var_2]
+        )
+happyReduction_236 _ _ _  = notHappyAtAll
 
 happyReduce_237 = happySpecReduce_3  120 happyReduction_237
 happyReduction_237 _
-	(HappyAbsSyn60  happy_var_2)
-	_
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation "RSeqs"  [happy_var_2]
-	)
-happyReduction_237 _ _ _  = notHappyAtAll 
+        (HappyAbsSyn60  happy_var_2)
+        _
+         =  HappyAbsSyn60
+                 (appEPAll myLocation "RSeqs"  [happy_var_2]
+        )
+happyReduction_237 _ _ _  = notHappyAtAll
 
 happyReduce_238 = happySpecReduce_1  120 happyReduction_238
 happyReduction_238 _
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation  "RDigit" []
-	)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation  "RDigit" []
+        )
 
 happyReduce_239 = happySpecReduce_1  120 happyReduction_239
 happyReduction_239 _
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation  "RLetter" []
-	)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation  "RLetter" []
+        )
 
 happyReduce_240 = happySpecReduce_1  120 happyReduction_240
 happyReduction_240 _
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation  "RUpper" []
-	)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation  "RUpper" []
+        )
 
 happyReduce_241 = happySpecReduce_1  120 happyReduction_241
 happyReduction_241 _
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation  "RLower" []
-	)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation  "RLower" []
+        )
 
 happyReduce_242 = happySpecReduce_1  120 happyReduction_242
 happyReduction_242 _
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation  "RAny" []
-	)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation  "RAny" []
+        )
 
 happyReduce_243 = happySpecReduce_3  120 happyReduction_243
 happyReduction_243 _
-	(HappyAbsSyn60  happy_var_2)
-	_
-	 =  HappyAbsSyn60
-		 (happy_var_2
-	)
-happyReduction_243 _ _ _  = notHappyAtAll 
+        (HappyAbsSyn60  happy_var_2)
+        _
+         =  HappyAbsSyn60
+                 (happy_var_2
+        )
+happyReduction_243 _ _ _  = notHappyAtAll
 
 happyReduce_244 = happySpecReduce_1  121 happyReduction_244
 happyReduction_244 (HappyAbsSyn115  happy_var_1)
-	 =  HappyAbsSyn115
-		 (happy_var_1
-	)
-happyReduction_244 _  = notHappyAtAll 
+         =  HappyAbsSyn115
+                 (happy_var_1
+        )
+happyReduction_244 _  = notHappyAtAll
 
 happyReduce_245 = happySpecReduce_1  122 happyReduction_245
 happyReduction_245 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (happy_var_1
-	)
-happyReduction_245 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (happy_var_1
+        )
+happyReduction_245 _  = notHappyAtAll
 
 happyReduce_246 = happySpecReduce_1  123 happyReduction_246
 happyReduction_246 (HappyAbsSyn61  happy_var_1)
-	 =  HappyAbsSyn123
-		 ((:[]) (happy_var_1)
-	)
-happyReduction_246 _  = notHappyAtAll 
+         =  HappyAbsSyn123
+                 ((:[]) (happy_var_1)
+        )
+happyReduction_246 _  = notHappyAtAll
 
 happyReduce_247 = happySpecReduce_3  123 happyReduction_247
 happyReduction_247 (HappyAbsSyn123  happy_var_3)
-	_
-	(HappyAbsSyn61  happy_var_1)
-	 =  HappyAbsSyn123
-		 ((:) (happy_var_1) (happy_var_3)
-	)
-happyReduction_247 _ _ _  = notHappyAtAll 
+        _
+        (HappyAbsSyn61  happy_var_1)
+         =  HappyAbsSyn123
+                 ((:) (happy_var_1) (happy_var_3)
+        )
+happyReduction_247 _ _ _  = notHappyAtAll
 
 happyReduce_248 = happySpecReduce_1  124 happyReduction_248
 happyReduction_248 (HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAllL myLocation  [happy_var_1]
-	)
-happyReduction_248 _  = notHappyAtAll 
+         =  HappyAbsSyn60
+                 (appEPAllL myLocation  [happy_var_1]
+        )
+happyReduction_248 _  = notHappyAtAll
 
 happyReduce_249 = happySpecReduce_3  124 happyReduction_249
 happyReduction_249 (HappyAbsSyn60  happy_var_3)
-	_
-	(HappyAbsSyn60  happy_var_1)
-	 =  HappyAbsSyn60
-		 (appEPAll myLocation ":"  [happy_var_1,happy_var_3]
-	)
-happyReduction_249 _ _ _  = notHappyAtAll 
+        _
+        (HappyAbsSyn60  happy_var_1)
+         =  HappyAbsSyn60
+                 (appEPAll myLocation ":"  [happy_var_1,happy_var_3]
+        )
+happyReduction_249 _ _ _  = notHappyAtAll
 
 happyNewToken action sts stk [] =
-	action 174 174 notHappyAtAll (HappyState action) sts stk []
+        action 174 174 notHappyAtAll (HappyState action) sts stk []
 
 happyNewToken action sts stk (tk:tks) =
-	let cont i = action i i tk (HappyState action) sts stk tks in
-	case tk of {
-	PT _ (TS _ 1) -> cont 125;
-	PT _ (TS _ 2) -> cont 126;
-	PT _ (TS _ 3) -> cont 127;
-	PT _ (TS _ 4) -> cont 128;
-	PT _ (TS _ 5) -> cont 129;
-	PT _ (TS _ 6) -> cont 130;
-	PT _ (TS _ 7) -> cont 131;
-	PT _ (TS _ 8) -> cont 132;
-	PT _ (TS _ 9) -> cont 133;
-	PT _ (TS _ 10) -> cont 134;
-	PT _ (TS _ 11) -> cont 135;
-	PT _ (TS _ 12) -> cont 136;
-	PT _ (TS _ 13) -> cont 137;
-	PT _ (TS _ 14) -> cont 138;
-	PT _ (TS _ 15) -> cont 139;
-	PT _ (TS _ 16) -> cont 140;
-	PT _ (TS _ 17) -> cont 141;
-	PT _ (TS _ 18) -> cont 142;
-	PT _ (TS _ 19) -> cont 143;
-	PT _ (TS _ 20) -> cont 144;
-	PT _ (TS _ 21) -> cont 145;
-	PT _ (TS _ 22) -> cont 146;
-	PT _ (TS _ 23) -> cont 147;
-	PT _ (TS _ 24) -> cont 148;
-	PT _ (TS _ 25) -> cont 149;
-	PT _ (TS _ 26) -> cont 150;
-	PT _ (TS _ 27) -> cont 151;
-	PT _ (TS _ 28) -> cont 152;
-	PT _ (TS _ 29) -> cont 153;
-	PT _ (TS _ 30) -> cont 154;
-	PT _ (TS _ 31) -> cont 155;
-	PT _ (TS _ 32) -> cont 156;
-	PT _ (TS _ 33) -> cont 157;
-	PT _ (TS _ 34) -> cont 158;
-	PT _ (TS _ 35) -> cont 159;
-	PT _ (TS _ 36) -> cont 160;
-	PT _ (TS _ 37) -> cont 161;
-	PT _ (TS _ 38) -> cont 162;
-	PT _ (TS _ 39) -> cont 163;
-	PT _ (TS _ 40) -> cont 164;
-	PT _ (TS _ 41) -> cont 165;
-	PT _ (TS _ 42) -> cont 166;
-	PT _ (TS _ 43) -> cont 167;
-	PT _ (TL happy_dollar_dollar) -> cont 168;
-	PT _ (TV happy_dollar_dollar) -> cont 169;
-	PT _ (TI happy_dollar_dollar) -> cont 170;
-	PT _ (TC happy_dollar_dollar) -> cont 171;
-	PT _ (TD happy_dollar_dollar) -> cont 172;
-	_ -> cont 173;
-	_ -> happyError' (tk:tks)
-	}
+        let cont i = action i i tk (HappyState action) sts stk tks in
+        case tk of {
+        PT _ (TS _ 1) -> cont 125;
+        PT _ (TS _ 2) -> cont 126;
+        PT _ (TS _ 3) -> cont 127;
+        PT _ (TS _ 4) -> cont 128;
+        PT _ (TS _ 5) -> cont 129;
+        PT _ (TS _ 6) -> cont 130;
+        PT _ (TS _ 7) -> cont 131;
+        PT _ (TS _ 8) -> cont 132;
+        PT _ (TS _ 9) -> cont 133;
+        PT _ (TS _ 10) -> cont 134;
+        PT _ (TS _ 11) -> cont 135;
+        PT _ (TS _ 12) -> cont 136;
+        PT _ (TS _ 13) -> cont 137;
+        PT _ (TS _ 14) -> cont 138;
+        PT _ (TS _ 15) -> cont 139;
+        PT _ (TS _ 16) -> cont 140;
+        PT _ (TS _ 17) -> cont 141;
+        PT _ (TS _ 18) -> cont 142;
+        PT _ (TS _ 19) -> cont 143;
+        PT _ (TS _ 20) -> cont 144;
+        PT _ (TS _ 21) -> cont 145;
+        PT _ (TS _ 22) -> cont 146;
+        PT _ (TS _ 23) -> cont 147;
+        PT _ (TS _ 24) -> cont 148;
+        PT _ (TS _ 25) -> cont 149;
+        PT _ (TS _ 26) -> cont 150;
+        PT _ (TS _ 27) -> cont 151;
+        PT _ (TS _ 28) -> cont 152;
+        PT _ (TS _ 29) -> cont 153;
+        PT _ (TS _ 30) -> cont 154;
+        PT _ (TS _ 31) -> cont 155;
+        PT _ (TS _ 32) -> cont 156;
+        PT _ (TS _ 33) -> cont 157;
+        PT _ (TS _ 34) -> cont 158;
+        PT _ (TS _ 35) -> cont 159;
+        PT _ (TS _ 36) -> cont 160;
+        PT _ (TS _ 37) -> cont 161;
+        PT _ (TS _ 38) -> cont 162;
+        PT _ (TS _ 39) -> cont 163;
+        PT _ (TS _ 40) -> cont 164;
+        PT _ (TS _ 41) -> cont 165;
+        PT _ (TS _ 42) -> cont 166;
+        PT _ (TS _ 43) -> cont 167;
+        PT _ (TL happy_dollar_dollar) -> cont 168;
+        PT _ (TV happy_dollar_dollar) -> cont 169;
+        PT _ (TI happy_dollar_dollar) -> cont 170;
+        PT _ (TC happy_dollar_dollar) -> cont 171;
+        PT _ (TD happy_dollar_dollar) -> cont 172;
+        _ -> cont 173;
+        _ -> happyError' (tk:tks)
+        }
 
 happyError_ tk tks = happyError' (tk:tks)
 
@@ -5511,7 +5511,7 @@ happySeq = happyDontSeq
 
 happyError :: [Token] -> ParseMonad a
 happyError ts =
-  fail $ "syntax error at " ++ tokenPos ts ++ 
+  fail $ "syntax error at " ++ tokenPos ts ++
   case ts of
     [] -> []
     [Err _] -> " due to lexer error"
@@ -5526,7 +5526,7 @@ myLocation = ($(fmap loc_package location >>= lift),"Language.LBNF.Grammar")
 {-# LINE 1 "<built-in>" #-}
 {-# LINE 1 "<command line>" #-}
 {-# LINE 1 "templates\\GenericTemplate.hs" #-}
--- Id: GenericTemplate.hs,v 1.26 2005/01/14 14:47:22 simonmar Exp 
+-- Id: GenericTemplate.hs,v 1.26 2005/01/14 14:47:22 simonmar Exp
 
 {-# LINE 28 "templates\\GenericTemplate.hs" #-}
 
@@ -5556,9 +5556,9 @@ happyParse start_state = happyNewToken start_state notHappyAtAll notHappyAtAll
 -- parse (a %partial parser).  We must ignore the saved token on the top of
 -- the stack in this case.
 happyAccept (1) tk st sts (_ `HappyStk` ans `HappyStk` _) =
-	happyReturn1 ans
-happyAccept j tk st sts (HappyStk ans _) = 
-	 (happyReturn1 ans)
+        happyReturn1 ans
+happyAccept j tk st sts (HappyStk ans _) =
+         (happyReturn1 ans)
 
 -----------------------------------------------------------------------------
 -- Arrays only: do the next action
@@ -5620,9 +5620,9 @@ happyReduce k i fn (1) tk st sts stk
      = happyFail (1) tk st sts stk
 happyReduce k nt fn j tk st sts stk
      = case happyDrop (k - ((1) :: Int)) sts of
-	 sts1@(((st1@(HappyState (action))):(_))) ->
-        	let r = fn stk in  -- it doesn't hurt to always seq here...
-       		happyDoSeq r (action nt j tk st1 sts1 r)
+         sts1@(((st1@(HappyState (action))):(_))) ->
+                let r = fn stk in  -- it doesn't hurt to always seq here...
+                happyDoSeq r (action nt j tk st1 sts1 r)
 
 happyMonadReduce k nt fn (1) tk st sts stk
      = happyFail (1) tk st sts stk
@@ -5663,25 +5663,25 @@ happyGoto action j tk st = action j j tk (HappyState action)
 
 -- parse error if we are in recovery and we fail again
 happyFail  (1) tk old_st _ stk =
---	trace "failing" $ 
-    	happyError_ tk
+--      trace "failing" $
+        happyError_ tk
 
 {-  We don't need state discarding for our restricted implementation of
     "error".  In fact, it can cause some bogus parses, so I've disabled it
     for now --SDM
 
 -- discard a state
-happyFail  (1) tk old_st (((HappyState (action))):(sts)) 
-						(saved_tok `HappyStk` _ `HappyStk` stk) =
---	trace ("discarding state, depth " ++ show (length stk))  $
-	action (1) (1) tk (HappyState (action)) sts ((saved_tok`HappyStk`stk))
+happyFail  (1) tk old_st (((HappyState (action))):(sts))
+                                                (saved_tok `HappyStk` _ `HappyStk` stk) =
+--      trace ("discarding state, depth " ++ show (length stk))  $
+        action (1) (1) tk (HappyState (action)) sts ((saved_tok`HappyStk`stk))
 -}
 
 -- Enter error recovery: generate an error token,
 --                       save the old token and carry on.
 happyFail  i tk (HappyState (action)) sts stk =
 --      trace "entering error recovery" $
-	action (1) (1) tk (HappyState (action)) sts ( (HappyErrorToken (i)) `HappyStk` stk)
+        action (1) (1) tk (HappyState (action)) sts ( (HappyErrorToken (i)) `HappyStk` stk)
 
 -- Internal happy errors:\n
 notHappyAtAll = error "Internal Happy error\n"
@@ -5695,10 +5695,10 @@ notHappyAtAll = error "Internal Happy error\n"
 
 
 -----------------------------------------------------------------------------
--- Seq-ing.  If the --strict flag is given, then Happy emits 
---	happySeq = happyDoSeq
+-- Seq-ing.  If the --strict flag is given, then Happy emits
+--      happySeq = happyDoSeq
 -- otherwise it emits
--- 	happySeq = happyDontSeq
+--      happySeq = happyDontSeq
 
 happyDoSeq, happyDontSeq :: a -> b -> b
 happyDoSeq   a b = a `seq` b

@@ -15,16 +15,16 @@
 
 
 > module Grammar (
-> 	Name, isEmpty, 
->	
->	Production, Grammar(..), mangler,
->	
->	LRAction(..), ActionTable, Goto(..), GotoTable, Priority(..),
+>       Name, isEmpty,
+>
+>       Production, Grammar(..), mangler,
+>
+>       LRAction(..), ActionTable, Goto(..), GotoTable, Priority(..),
 >       Assoc(..),
->	
->	errorName, errorTok, startName, firstStartTok, dummyTok,
->	eofName, epsilonTok
->	) where
+>
+>       errorName, errorTok, startName, firstStartTok, dummyTok,
+>       eofName, epsilonTok
+>       ) where
 
 
 > import GenUtils
@@ -60,59 +60,59 @@
 > type Production = (Name,[Name],(String,[Int]),Priority)
 
 
-> data Grammar 
+> data Grammar
 >       = Grammar {
->		productions 	  :: [Production],
->		lookupProdNo 	  :: Int -> Production,
->		lookupProdsOfName :: Name -> [Int],
->               token_specs 	  :: [(Name,String)],
->               terminals 	  :: [Name],
->               non_terminals 	  :: [Name],
->		starts		  :: [(String,Name,Name,Bool)],
->		types 		  :: Array Int (Maybe String),
->               token_names 	  :: Array Int String,
->		first_nonterm	  :: Name,
->		first_term 	  :: Name,
->               eof_term	  :: Name,
+>               productions       :: [Production],
+>               lookupProdNo      :: Int -> Production,
+>               lookupProdsOfName :: Name -> [Int],
+>               token_specs       :: [(Name,String)],
+>               terminals         :: [Name],
+>               non_terminals     :: [Name],
+>               starts            :: [(String,Name,Name,Bool)],
+>               types             :: Array Int (Maybe String),
+>               token_names       :: Array Int String,
+>               first_nonterm     :: Name,
+>               first_term        :: Name,
+>               eof_term          :: Name,
 >               priorities        :: [(Name,Priority)],
->		token_type	  :: String,
->		imported_identity :: Bool,
->		monad		  :: (Bool,String,String,String,String),
->		expect		  :: Maybe Int,
+>               token_type        :: String,
+>               imported_identity :: Bool,
+>               monad             :: (Bool,String,String,String,String),
+>               expect            :: Maybe Int,
 >               attributes        :: [(String,String)],
 >               attributetype     :: String,
->		lexer		  :: Maybe (String,String),
->		error_handler	  :: Maybe String
->	}
+>               lexer             :: Maybe (String,String),
+>               error_handler     :: Maybe String
+>       }
 
 
 #ifdef DEBUG
 
 
 > instance Show Grammar where
->       showsPrec _ (Grammar 
->		{ productions		= p
->		, token_specs		= t
->               , terminals		= ts
->               , non_terminals		= nts
->		, starts		= starts
->		, types			= tys
->               , token_names		= e
->		, first_nonterm		= fnt
->		, first_term		= ft
->               , eof_term		= eof
->	 	})
->	 = showString "productions = "     . shows p
+>       showsPrec _ (Grammar
+>               { productions           = p
+>               , token_specs           = t
+>               , terminals             = ts
+>               , non_terminals         = nts
+>               , starts                = starts
+>               , types                 = tys
+>               , token_names           = e
+>               , first_nonterm         = fnt
+>               , first_term            = ft
+>               , eof_term              = eof
+>               })
+>        = showString "productions = "     . shows p
 >        . showString "\ntoken_specs = "   . shows t
 >        . showString "\nterminals = "     . shows ts
 >        . showString "\nnonterminals = "  . shows nts
 >        . showString "\nstarts = "        . shows starts
 >        . showString "\ntypes = "         . shows tys
 >        . showString "\ntoken_names = "   . shows e
->	 . showString "\nfirst_nonterm = " . shows fnt
->	 . showString "\nfirst_term = "    . shows ft
+>        . showString "\nfirst_nonterm = " . shows fnt
+>        . showString "\nfirst_term = "    . shows ft
 >        . showString "\neof = "           . shows eof
->	 . showString "\n"
+>        . showString "\n"
 
 
 #endif
@@ -124,7 +124,7 @@
 #ifdef DEBUG
 
 
->	deriving Show
+>       deriving Show
 
 
 #endif
@@ -136,7 +136,7 @@
 #ifdef DEBUG
 
 
->	deriving Show
+>       deriving Show
 
 
 #endif
@@ -205,7 +205,7 @@
 
 > startName, eofName, errorName, dummyName :: String
 > startName = "%start" -- with a suffix, like %start_1, %start_2 etc.
-> eofName   = "%eof"			
+> eofName   = "%eof"
 > errorName = "error"
 > dummyName = "%dummy"  -- shouldn't occur in the grammar anywhere
 
@@ -213,13 +213,13 @@
 > firstStartTok, dummyTok, errorTok, epsilonTok :: Name
 > firstStartTok   = 3
 > dummyTok        = 2
-> errorTok    	  = 1
-> epsilonTok 	  = 0
+> errorTok        = 1
+> epsilonTok      = 0
 
 
 > isEmpty :: Name -> Bool
 > isEmpty n | n == epsilonTok = True
->	    | otherwise       = False
+>           | otherwise       = False
 
 
 
@@ -265,26 +265,26 @@
 >       terminal_strs  = concat (map getTerm dirs) ++ [eofName]
 
 
->	n_starts   = length starts'
->	n_nts      = length nonterm_strs
->	n_ts       = length terminal_strs
->	first_nt   = firstStartTok + n_starts
->	first_t    = first_nt + n_nts
->	last_start = first_nt - 1
->	last_nt    = first_t  - 1
->	last_t     = first_t + n_ts - 1
+>       n_starts   = length starts'
+>       n_nts      = length nonterm_strs
+>       n_ts       = length terminal_strs
+>       first_nt   = firstStartTok + n_starts
+>       first_t    = first_nt + n_nts
+>       last_start = first_nt - 1
+>       last_nt    = first_t  - 1
+>       last_t     = first_t + n_ts - 1
 
 
->	start_names    = [ firstStartTok .. last_start ]
+>       start_names    = [ firstStartTok .. last_start ]
 >       nonterm_names  = [ first_nt .. last_nt ]
 >       terminal_names = [ first_t .. last_t ]
 
 
->	starts'	    = case getParserNames dirs of
->			[] -> [TokenName "happyParse" Nothing False]
->			ns -> ns
+>       starts'     = case getParserNames dirs of
+>                       [] -> [TokenName "happyParse" Nothing False]
+>                       ns -> ns
 >
->	start_strs  = [ startName++'_':p  | (TokenName p _ _) <- starts' ]
+>       start_strs  = [ startName++'_':p  | (TokenName p _ _) <- starts' ]
 
 
 
@@ -292,14 +292,14 @@
 
 
 >       name_env = (errorTok, errorName) :
->		   (dummyTok, dummyName) :
->		   zip start_names    start_strs ++
->		   zip nonterm_names  nonterm_strs ++
->		   zip terminal_names terminal_strs
+>                  (dummyTok, dummyName) :
+>                  zip start_names    start_strs ++
+>                  zip nonterm_names  nonterm_strs ++
+>                  zip terminal_names terminal_strs
 
 
->	lookupName :: String -> [Name]
->	lookupName n = [ t | (t,r) <- name_env, r == n ]
+>       lookupName :: String -> [Name]
+>       lookupName n = [ t | (t,r) <- name_env, r == n ]
 
 
 >       mapToName str' =
@@ -315,10 +315,10 @@
 
 
 
->		-- default start token is the first non-terminal in the grammar
->	lookupStart (TokenName _ Nothing  _) = return first_nt
->	lookupStart (TokenName _ (Just n) _) = mapToName n
->	lookupStart _ = error "lookupStart: Not a TokenName"
+>               -- default start token is the first non-terminal in the grammar
+>       lookupStart (TokenName _ Nothing  _) = return first_nt
+>       lookupStart (TokenName _ (Just n) _) = mapToName n
+>       lookupStart _ = error "lookupStart: Not a TokenName"
 >   -- in
 
 
@@ -326,10 +326,10 @@
 
 
 >   let
->	parser_names   = [ s | TokenName s _ _ <- starts' ]
->	start_partials = [ b | TokenName _ _ b <- starts' ]
->	start_prods = zipWith (\nm tok -> (nm, [tok], ("no code",[]), No))
->			 start_names start_toks
+>       parser_names   = [ s | TokenName s _ _ <- starts' ]
+>       start_partials = [ b | TokenName _ _ b <- starts' ]
+>       start_prods = zipWith (\nm tok -> (nm, [tok], ("no code",[]), No))
+>                        start_names start_toks
 
 
 
@@ -341,8 +341,8 @@
 >       prios = [ (name,mkPrio i dir)
 >               | (i,dir) <- priodir
 >               , nm <- AbsSyn.getPrioNames dir
->		, name <- lookupName nm
->		]
+>               , name <- lookupName nm
+>               ]
 
 
 >       prioByString = [ (name, mkPrio i dir)
@@ -355,24 +355,24 @@
 
 
 
->	convNT (nt, prods, ty) 
->	  = do nt' <- mapToName nt
->	       return (nt', prods, ty)
+>       convNT (nt, prods, ty)
+>         = do nt' <- mapToName nt
+>              return (nt', prods, ty)
 >
 >       attrs = getAttributes dirs
 >       attrType = fromMaybe "HappyAttrs" (getAttributetype dirs)
 >
-> 	transRule (nt, prods, _ty)
->   	  = mapM (finishRule nt) prods
+>       transRule (nt, prods, _ty)
+>         = mapM (finishRule nt) prods
 >
->	finishRule nt (lhs,code,line,prec)
->	  = mapWriter (\(a,e) -> (a, map (addLine line) e)) $ do
+>       finishRule nt (lhs,code,line,prec)
+>         = mapWriter (\(a,e) -> (a, map (addLine line) e)) $ do
 >           lhs' <- mapM mapToName lhs
 >           code' <- checkCode (length lhs) lhs' nonterm_names code attrs
->	    case mkPrec lhs' prec of
->		Left s  -> do addErr ("Undeclared precedence token: " ++ s)
+>           case mkPrec lhs' prec of
+>               Left s  -> do addErr ("Undeclared precedence token: " ++ s)
 >                             return (nt, lhs', code', No)
->		Right p -> return (nt, lhs', code', p)
+>               Right p -> return (nt, lhs', code', p)
 >
 >       mkPrec :: [Name] -> Maybe String -> Either String Priority
 >       mkPrec lhs prio =
@@ -393,12 +393,12 @@
 
 
 >   let
->	tys = accumArray (\_ x -> x) Nothing (first_nt, last_nt) 
->			[ (nm, Just ty) | (nm, _, Just ty) <- rules1 ]
+>       tys = accumArray (\_ x -> x) Nothing (first_nt, last_nt)
+>                       [ (nm, Just ty) | (nm, _, Just ty) <- rules1 ]
 
 
->	env_array :: Array Int String
->	env_array = array (errorTok, last_t) name_env
+>       env_array :: Array Int String
+>       env_array = array (errorTok, last_t) name_env
 >   -- in
 
 
@@ -406,52 +406,52 @@
 
 
 
->   let 
->	fixTokenSpec (a,b) = do n <- mapToName a; return (n,b)
+>   let
+>       fixTokenSpec (a,b) = do n <- mapToName a; return (n,b)
 >   -- in
 >   tokspec <- mapM fixTokenSpec (getTokenSpec dirs)
 
 
 >   let
->	   ass = combinePairs [ (a,no)
->			      | ((a,_,_,_),no) <- zip productions' [0..] ]
->	   arr = array (firstStartTok, length ass - 1 + firstStartTok) ass
+>          ass = combinePairs [ (a,no)
+>                             | ((a,_,_,_),no) <- zip productions' [0..] ]
+>          arr = array (firstStartTok, length ass - 1 + firstStartTok) ass
 
 
->	   lookup_prods :: Name -> [Int]
->	   lookup_prods x | x >= firstStartTok && x < first_t = arr ! x
->	   lookup_prods _ = error "lookup_prods"
+>          lookup_prods :: Name -> [Int]
+>          lookup_prods x | x >= firstStartTok && x < first_t = arr ! x
+>          lookup_prods _ = error "lookup_prods"
 >
->	   productions' = start_prods ++ concat rules2
->	   prod_array  = listArray' (0,length productions' - 1) productions'
+>          productions' = start_prods ++ concat rules2
+>          prod_array  = listArray' (0,length productions' - 1) productions'
 >   -- in
 
 
 >   return  (Grammar {
->		productions 	  = productions',
->		lookupProdNo   	  = (prod_array !),
->		lookupProdsOfName = lookup_prods,
->               token_specs	  = tokspec,
->               terminals	  = errorTok : terminal_names,
->               non_terminals	  = start_names ++ nonterm_names,
->				  	-- INCLUDES the %start tokens
->		starts		  = zip4 parser_names start_names start_toks
->					start_partials,
->		types		  = tys,
->               token_names	  = env_array,
->		first_nonterm	  = first_nt,
->		first_term	  = first_t,
->               eof_term	  = last terminal_names,
+>               productions       = productions',
+>               lookupProdNo      = (prod_array !),
+>               lookupProdsOfName = lookup_prods,
+>               token_specs       = tokspec,
+>               terminals         = errorTok : terminal_names,
+>               non_terminals     = start_names ++ nonterm_names,
+>                                       -- INCLUDES the %start tokens
+>               starts            = zip4 parser_names start_names start_toks
+>                                       start_partials,
+>               types             = tys,
+>               token_names       = env_array,
+>               first_nonterm     = first_nt,
+>               first_term        = first_t,
+>               eof_term          = last terminal_names,
 >               priorities        = prios,
->		imported_identity		  = getImportedIdentity dirs,
->		monad		  = getMonad dirs,
->		lexer		  = getLexer dirs,
->		error_handler	  = getError dirs,
->		token_type	  = getTokenType dirs,
+>               imported_identity                 = getImportedIdentity dirs,
+>               monad             = getMonad dirs,
+>               lexer             = getLexer dirs,
+>               error_handler     = getError dirs,
+>               token_type        = getTokenType dirs,
 >               expect            = getExpect dirs,
 >               attributes        = attrs,
 >               attributetype     = attrType
->	})
+>       })
 
 
 
@@ -474,8 +474,8 @@
 > checkRules :: [String] -> String -> [String] -> Writer [ErrMsg] [String]
 > checkRules (name:rest) above nonterms
 >       | name == above = checkRules rest name nonterms
->       | name `elem` nonterms 
->		= do addErr ("Multiple rules for '" ++ name ++ "'")
+>       | name `elem` nonterms
+>               = do addErr ("Multiple rules for '" ++ name ++ "'")
 >                    checkRules rest name nonterms
 >       | otherwise = checkRules rest name (name : nonterms)
 
@@ -545,8 +545,8 @@
 
 
 
->                  rulesStr <- formatRules arity attrNames defaultAttr 
->                               allSubProductions selfRules 
+>                  rulesStr <- formatRules arity attrNames defaultAttr
+>                               allSubProductions selfRules
 >                               subRules conditions
 
 
@@ -576,7 +576,7 @@
 >          getTokens (SubAssign _ toks)       = toks
 >          getTokens (Conditional toks)       = toks
 >          getTokens (RightmostAssign _ toks) = toks
->           
+>
 >          checkArity x = when (x > arity) $ addErr (show x++" out of range")
 
 
@@ -592,8 +592,8 @@
 
 
 
-> formatRules :: Int -> [String] -> String -> [Name] 
->             -> [AgRule] -> [AgRule] -> [AgRule] 
+> formatRules :: Int -> [String] -> String -> [Name]
+>             -> [AgRule] -> [AgRule] -> [AgRule]
 >             -> M String
 
 
@@ -624,7 +624,7 @@
 >        subProductionRules = concat $ map formatSubRules prods
 
 
->        formatSubRules i = 
+>        formatSubRules i =
 >           let attrs = fromMaybe [] . lookup i $ subRulesMap
 >               attrUpdates' = concat $ intersperse ", " $ map (formatSubRule i) attrs
 >               attrUpdates  = case attrUpdates' of [] -> []; x -> "{ "++x++" }"
@@ -632,7 +632,7 @@
 >                     ," happyEmptyAttrs"
 >                     , attrUpdates
 >                     ]
->         
+>
 >        formattedConditions = concat $ intersperse "++" $ localConditions : (map (\i -> "happyConditions_"++(show i)) prods)
 >        localConditions = "["++(concat $ intersperse ", " $ map formatCondition conditions)++"]"
 >        formatCondition (Conditional toks) = formatTokens toks
@@ -654,10 +654,10 @@
 >        formatToken (AgTok_SelfRef [])     = "("++defaultAttr++" happySelfAttrs) "
 >        formatToken (AgTok_SelfRef x)      = "("++x++" happySelfAttrs) "
 >        formatToken (AgTok_RightmostRef x) = formatToken (AgTok_SubRef (arity,x))
->        formatToken (AgTok_SubRef (i,[])) 
+>        formatToken (AgTok_SubRef (i,[]))
 >            | i `elem` prods = "("++defaultAttr++" happySubAttrs_"++(show i)++") "
 >            | otherwise      = mkHappyVar i ++ " "
->        formatToken (AgTok_SubRef (i,x)) 
+>        formatToken (AgTok_SubRef (i,x))
 >            | i `elem` prods = "("++x++" happySubAttrs_"++(show i)++") "
 >            | otherwise      = error ("lhs "++(show i)++" is not a non-terminal")
 >        formatToken (AgTok_Unknown x)     = x++" "
@@ -682,37 +682,37 @@
 > doCheckCode arity code0 = go code0 "" []
 >   where go code acc used =
 >           case code of
->		[] -> return (reverse acc, used)
->	
->		'"'  :r    -> case reads code :: [(String,String)] of
->				 []       -> go r ('"':acc) used
->				 (s,r'):_ -> go r' (reverse (show s) ++ acc) used
->		a:'\'' :r | isAlphaNum a -> go r ('\'':a:acc) used
->		'\'' :r    -> case reads code :: [(Char,String)] of
->				 []       -> go r  ('\'':acc) used
->				 (c,r'):_ -> go r' (reverse (show c) ++ acc) used
->		'\\':'$':r -> go r ('$':acc) used
+>               [] -> return (reverse acc, used)
 >
->		'$':'>':r -- the "rightmost token"
->			| arity == 0 -> do addErr "$> in empty rule"
+>               '"'  :r    -> case reads code :: [(String,String)] of
+>                                []       -> go r ('"':acc) used
+>                                (s,r'):_ -> go r' (reverse (show s) ++ acc) used
+>               a:'\'' :r | isAlphaNum a -> go r ('\'':a:acc) used
+>               '\'' :r    -> case reads code :: [(Char,String)] of
+>                                []       -> go r  ('\'':acc) used
+>                                (c,r'):_ -> go r' (reverse (show c) ++ acc) used
+>               '\\':'$':r -> go r ('$':acc) used
+>
+>               '$':'>':r -- the "rightmost token"
+>                       | arity == 0 -> do addErr "$> in empty rule"
 >                                          go r acc used
->			| otherwise  -> go r (reverse (mkHappyVar arity) ++ acc)
->					 (arity : used)
+>                       | otherwise  -> go r (reverse (mkHappyVar arity) ++ acc)
+>                                        (arity : used)
 >
->		'$':r@(i:_) | isDigit i -> 
->			case reads r :: [(Int,String)] of
->			  (j,r'):_ -> 
->			     if j > arity 
->			   	  then do addErr ('$': show j ++ " out of range")
+>               '$':r@(i:_) | isDigit i ->
+>                       case reads r :: [(Int,String)] of
+>                         (j,r'):_ ->
+>                            if j > arity
+>                                 then do addErr ('$': show j ++ " out of range")
 >                                         go r' acc used
->			   	  else go r' (reverse (mkHappyVar j) ++ acc) 
->					 (j : used)
->			  [] -> error "doCheckCode []"
->		c:r  -> go r (c:acc) used
+>                                 else go r' (reverse (mkHappyVar j) ++ acc)
+>                                        (j : used)
+>                         [] -> error "doCheckCode []"
+>               c:r  -> go r (c:acc) used
 
 
 > mkHappyVar :: Int -> String
-> mkHappyVar n 	= "happy_var_" ++ show n
+> mkHappyVar n  = "happy_var_" ++ show n
 
 
 
@@ -726,20 +726,20 @@
 >               | LR'Accept             -- :-)
 >               | LR'Fail               -- :-(
 >               | LR'MustFail           -- :-(
->		| LR'Multiple [LRAction] LRAction	-- conflict
+>               | LR'Multiple [LRAction] LRAction       -- conflict
 >       deriving(Eq
 
 
 #ifdef DEBUG
 
 
->	,Show
+>       ,Show
 
 
 #endif
 
 
->	)	
+>       )
 
 
 > type ActionTable = Array Int{-state-} (Array Int{-terminal#-} LRAction)
@@ -761,20 +761,20 @@
 
 
 
-> data Goto = Goto Int | NoGoto 
+> data Goto = Goto Int | NoGoto
 >       deriving(Eq
 
 
 #ifdef DEBUG
 
 
->	,Show
+>       ,Show
 
 
 #endif
 
 
->	)	
+>       )
 
 
 > type GotoTable = Array Int{-state-} (Array Int{-nonterminal #-} Goto)

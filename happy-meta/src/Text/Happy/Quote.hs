@@ -31,7 +31,7 @@ compileHappy :: Happy -> Q [Dec]
 compileHappy = return . either error id . parseDecs
 
 happy :: QuasiQuoter
-happy = QuasiQuoter {quoteExp = happyToExp . parseHappyInfo} -- (error "happy: pattern quoting is not supported") 
+happy = QuasiQuoter {quoteExp = happyToExp . parseHappyInfo} -- (error "happy: pattern quoting is not supported")
 
 
 parseHappy :: String -> Happy
@@ -58,10 +58,10 @@ happyWarn i = do
 
 happyToExp (code,info) = happyWarn info >> litE (StringL code)
 
---	optIO (not (null unused_rules))
---	   (hPutStrLn stderr ("unused rules: " ++ show (length unused_rules))) >>
---	optIO (not (null unused_terminals))
---	   (hPutStrLn stderr ("unused terminals: " ++ show (length unused_terminals))) >>
+--      optIO (not (null unused_rules))
+--         (hPutStrLn stderr ("unused rules: " ++ show (length unused_rules))) >>
+--      optIO (not (null unused_terminals))
+--         (hPutStrLn stderr ("unused terminals: " ++ show (length unused_terminals))) >>
 
 
 -- This is some really bad code but it works for this purpose.

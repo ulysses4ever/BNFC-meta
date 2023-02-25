@@ -4,7 +4,7 @@ import Language.LBNF.Runtime(printTree) -- overloaded pretty-printing function
 import Prelude hiding (exp)
 
 
--- All variables are meta-variables. 
+-- All variables are meta-variables.
 -- Variables must be declared in the function parameters
 -- Boolean and numeric variables are type checked by Haskell.
 prg n tmp x = [prog|
@@ -36,11 +36,10 @@ instance Variable BVar where
 
 class Fresh a where
   fresh :: [String] -> a -> Prog
-  
+
 instance Fresh Prog where
   fresh _ e = e
-  
+
 instance (Variable a, Fresh b) => Fresh  (a -> b) where
   fresh (s:ss) g = fresh ss $ g (fromString s)
-
 

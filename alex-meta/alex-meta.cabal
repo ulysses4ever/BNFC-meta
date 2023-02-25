@@ -1,7 +1,7 @@
 Name:                alex-meta
 Version:             0.3.0.13
 Synopsis:            Quasi-quoter for Alex lexers
--- Description:         
+-- Description:
 License:             BSD3
 License-file:        LICENSE
 Author:              Jonas Duregard
@@ -19,10 +19,10 @@ Library
 
   default-extensions: CPP
 
-  Exposed-modules:     
+  Exposed-modules:
     Text.Alex.Quote
     Text.Alex.AlexTemplate
-  
+
   Build-depends:
       template-haskell >=2.5 && <3
     , haskell-src-meta >=0.5.1.2 && <1.0
@@ -33,7 +33,7 @@ Library
     Build-depends: semigroups == 0.19.*
 
   Build-tools: alex, happy
-  
+
   other-modules:
         Text.Alex
         AbsSyn

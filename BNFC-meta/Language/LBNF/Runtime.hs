@@ -1,5 +1,5 @@
 {-#LANGUAGE TemplateHaskell #-}
--- | Contains things that are typically needed in modules that use 
+-- | Contains things that are typically needed in modules that use
 -- languages defined using BNFC-meta.
 module Language.LBNF.Runtime(
   -- * Happy and Alex runtimes
@@ -8,10 +8,10 @@ module Language.LBNF.Runtime(
   -- , (!)
   -- , Array
   -- , parseToQuoter
-  
+
   ParseMonad(..)
   , err
-  
+
   -- * Pretty printing runtimes
   , printTree
   , Doc
@@ -61,10 +61,10 @@ instance Applicative ParseMonad where
 --  mplus (Bad _) y = y
 --  mplus x       _ = x
 
--- * An eliminator for a parse result. Takes a function that recovers from any 
--- parse errors. Typical usage: @err error (pCategory (tokens s)) :: Category@ 
+-- * An eliminator for a parse result. Takes a function that recovers from any
+-- parse errors. Typical usage: @err error (pCategory (tokens s)) :: Category@
 err :: (String -> a) -> ParseMonad a -> a
-err e b = case b of 
+err e b = case b of
     Bad s -> e s
     Ok x  -> x
 

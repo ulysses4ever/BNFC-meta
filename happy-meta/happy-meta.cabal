@@ -2,7 +2,7 @@ Cabal-version:       1.18
 Name:                happy-meta
 Version:             0.2.1.0
 Synopsis:            Quasi-quoter for Happy parsers
--- Description:         
+-- Description:
 License:             BSD3
 License-file:        LICENSE
 Author:              Jonas Duregard
@@ -19,8 +19,8 @@ Library
   default-language: Haskell98
   hs-source-dirs: src .
   default-extensions: CPP, MagicHash
-  
-  Exposed-modules:     
+
+  Exposed-modules:
     Text.Happy.Quote
 
   Build-depends:
@@ -32,8 +32,8 @@ Library
     , mtl >= 1.0
 
   Build-tools: happy
-  
-  Other-modules:       
+
+  Other-modules:
         Text.Happy
         Text.Happy.HappyTemplate
         AbsSyn
@@ -50,8 +50,8 @@ Library
         Target
         AttrGrammar
         AttrGrammarParser
-        ParamRules    
-  
+        ParamRules
+
 source-repository head
   type: git
   location: http://github.com/ulysses4ever/BNFC-meta

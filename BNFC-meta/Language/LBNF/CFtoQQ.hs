@@ -24,9 +24,9 @@ deriveAq cf (_,i,a) = do
     v <- newName "a"
     let nAqToken = mkName "AqToken"
         nAqFun   = mkName "global_aq"
-    d <-funD nAqFun [clause [conP nAqToken [varP v]] (normalB $ aqDec (varE v)) []] 
+    d <-funD nAqFun [clause [conP nAqToken [varP v]] (normalB $ aqDec (varE v)) []]
     return $ [d] where
-  aqDec v = 
+  aqDec v =
     [| stringAq (drop $(lie) . reverse . drop $(lae) . reverse $ printTree $(v)) |]
   (lie, lae) = (lift $ length i + 1 ,lift $ length a + 1)
 
@@ -35,5 +35,4 @@ mkQQ s = funD qqName [clause [] (normalB qqe) []] where
   qqName = mkName $ quoterName s
   qName = mkName $ 'q':s
   tokName = mkName "myLexer"
-
 

@@ -14,8 +14,8 @@
 
 
 > data Target
-> 	= TargetHaskell			-- functions and things
-> 	| TargetArrayBased		-- arrays
+>       = TargetHaskell                 -- functions and things
+>       | TargetArrayBased              -- arrays
 
 
 >  deriving Eq

@@ -1,5 +1,5 @@
 -- -----------------------------------------------------------------------------
--- 
+--
 -- Info.hs, part of Alex
 --
 -- (c) Simon Marlow 2003
@@ -25,7 +25,7 @@ infoDFA _ func_nm dfa
   = str "Scanner : " . str func_nm . nl
   . str "States  : " . shows (length dfa_list) . nl
   . nl . infoDFA'
-  where    
+  where
     dfa_list = Map.toAscList (dfa_states dfa)
 
     infoDFA' = interleave_shows nl (map infoStateN dfa_list)
@@ -49,7 +49,7 @@ infoDFA _ func_nm dfa
             Nothing   -> id
             Just code -> str " { " . str code . str " }")
         . nl
-        
+
     infoTransition (char',state)
         = str (ljustify 8 (show char'))
         . str " -> "

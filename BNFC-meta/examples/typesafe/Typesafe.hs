@@ -5,13 +5,13 @@
 module Typesafe where
 
 import Language.LBNF
-  
+
 
 bnfc [lbnf|
 
 antiquote "[" ":" ":]" ;
 
- 
+
 Fun.      Prog     ::=  Ident "(" ")" "{" [Stm] "}" ;
 
 SBAss.    Stm      ::= BVar ":=" BExp ";"  ;
@@ -22,7 +22,7 @@ SWhile.   Stm      ::= "while" "(" BExp ")" "{" [Stm] "}" ;
 SBlock.   Stm      ::= "{" [Stm] "}" ;
 
 
- 
+
 EAnd.     BExp0     ::= BExp "&" BExp1 ;
 ENeg.     BExp1     ::= "!" BExp1 ;
 ELt.      BExp1     ::= Exp "<" Exp ;
@@ -73,7 +73,4 @@ comment "//" ;
 
 entrypoints Prog, Stm, Exp, BExp ;
   |]
-
- 
-
 

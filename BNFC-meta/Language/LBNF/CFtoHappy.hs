@@ -17,7 +17,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
-module Language.LBNF.CFtoHappy 
+module Language.LBNF.CFtoHappy
        (
        cf2Happy
        ,HappyMode(..)
@@ -70,10 +70,10 @@ concreteHappy :: Loc -> CF -> String
 concreteHappy m = parseHappy . cf2Happy m
 
 
--- generates happy code. 
+-- generates happy code.
 cf2Happy :: Loc -> CF -> String
 cf2Happy l cf
- = unlines 
+ = unlines
     [declarations Standard (allEntryPoints cf),
      tokens (symbols cf ++ reservedWords cf),
      specialToks cf,
@@ -85,15 +85,15 @@ cf2Happy l cf
 
 -- The declarations of a happy file.
 declarations :: HappyMode -> [NonTerminal] -> String
-declarations mode ns = unlines 
+declarations mode ns = unlines
                  [generateP ns,
-          	  case mode of 
+                  case mode of
                     Standard -> "-- no lexer declaration"
                     GLR      -> "%lexer { myLexer } { Err _ }",
                   "%monad { ParseMonad }",
                   "%tokentype { " ++ tokenName ++ " }"]
    where generateP []     = []
-	 generateP (n:ns) = concat ["%name p",n' ," ",n' ,"\n%name q",n' ," QQ_",n',"\n" ,generateP ns]
+         generateP (n:ns) = concat ["%name p",n' ," ",n' ,"\n%name q",n' ," QQ_",n',"\n" ,generateP ns]
                                where n' = identCat n
 
 -- The useless delimiter symbol.
@@ -104,7 +104,7 @@ delimiter = "\n%%\n"
 tokens :: [String] -> String
 tokens toks = "%token \n" ++ prTokens (zip (sort toks) [1..])
  where prTokens []         = []
-       prTokens ((t,k):tk) = " " ++ (convert t) ++ 
+       prTokens ((t,k):tk) = " " ++ (convert t) ++
                              " { " ++ oneTok t k ++ " }\n" ++
                              prTokens tk
        oneTok t k = "PT _ (TS _ " ++ show k ++ ")"
@@ -113,8 +113,8 @@ convert :: String -> String
 convert "\\" = concat ['\'':"\\\\","\'"]
 convert xs   = concat ['\'':(escape xs),"\'"]
   where escape [] = []
-	escape ('\'':xs) = '\\':'\'' : escape xs
-	escape (x:xs) = x:escape xs
+        escape ('\'':xs) = '\\':'\'' : escape xs
+        escape (x:xs) = x:escape xs
 
 rulesForHappy :: CF -> Rules
 rulesForHappy cf = map mkOne $ ruleGroups cf where
@@ -122,40 +122,40 @@ rulesForHappy cf = map mkOne $ ruleGroups cf where
 
 
 constructRule :: CF -> [Rule] -> NonTerminal -> (NonTerminal,[(Rule,Pattern,Action)])
-constructRule cf rules nt = (nt,[(r,p,generateAction nt (revF b r) m) | 
+constructRule cf rules nt = (nt,[(r,p,generateAction nt (revF b r) m) |
      r0 <- rules,
-     let (b,r) = if isConsFun (funRule r0) && elem (valCat r0) revs 
-                   then (True,revSepListRule r0) 
+     let (b,r) = if isConsFun (funRule r0) && elem (valCat r0) revs
+                   then (True,revSepListRule r0)
                  else (False,r0),
      let (p,m) = generatePatterns cf r])
  where
    revF b r = if b then ("flip " ++ funRule r) else (underscore $ funRule r)
    revs = reversibleCats cf
    underscore f | isDefinedRule f   = f ++ "_"
-		| otherwise	    = f
+                | otherwise         = f
 
 
 generateAction :: NonTerminal -> (Fun) -> [(Bool,Cat,MetaVar)] -> Action
 generateAction nt f ms = MkAction (if isCoercion f then Nothing else Just f) ms
 
--- Generate patterns and a set of metavariables indicating 
+-- Generate patterns and a set of metavariables indicating
 -- where in the pattern the non-terminal
 
 generatePatterns :: CF -> Rule -> (Pattern,[(Bool,Cat,MetaVar)])
 generatePatterns cf r = case rhsRule r of
   Left []   -> ([Right "{- empty -}"],[])
-  Left its  -> ((map mkIt its), metas its) 
+  Left its  -> ((map mkIt its), metas its)
   Right (_,tok)   -> ([Right $ "L_" ++  tok],[(False,funRule r,"$1")])
  where
    mkIt i = case i of
      Left c -> Left c
      Right s -> Right $ convert s
    metas its = [revIf c ('$': show i) | (i,Left c) <- zip [1 ::Int ..] its]
-   revIf c m = (not (isConsFun (funRule r)) && elem c revs,c,m) 
+   revIf c m = (not (isConsFun (funRule r)) && elem c revs,c,m)
    revs = reversibleCats cf
 
 
--- We have now constructed the patterns and actions, 
+-- We have now constructed the patterns and actions,
 -- so the only thing left is to merge them into one string.
 
 
@@ -164,14 +164,14 @@ prRules :: Loc -> Rules -> String
 prRules l rs = unlines . map prOne $  rs
   where
     prOne (nt,[]) = ""
-    prOne r@(nt,_) = 
-      prTypeSig n (normCat nt) ++ prRule l r ++ 
+    prOne r@(nt,_) =
+      prTypeSig n (normCat nt) ++ prRule l r ++
       prTypeSig qqn "BNFC_QQType" ++ prRuleQ l r
         where qqn   = qqCat nt
               n     = identCat nt
 
 qqCat = ("QQ_"++). identCat
-    
+
 qualify "" f     = f
 qualify _ f@"[]" = f
 qualify m  f     = m ++ "." ++ f
@@ -181,44 +181,44 @@ prTypeSig cat typ = unwords [cat, "::", "{", typ, "}\n"]
 
 prRule :: Loc -> Rul -> String
 prRule _ (_,[])           = ""
-prRule m (nt,((_,p,a):ls))  = 
+prRule m (nt,((_,p,a):ls))  =
   unwords [identCat nt, ":" , prPattern p, "{", prAction a, "}", "\n" ++ pr ls] ++ "\n"
-  where 
+  where
     pr [] = []
-    pr ((_,p,a):ls) = 
+    pr ((_,p,a):ls) =
       unlines [(concat $ intersperse " " ["  |", prPattern p, "{", prAction a , "}"])] ++ pr ls
     prAction :: Action -> String
     prAction (MkAction fun []) = maybe "" pf fun where
       pf f = f
     prAction (MkAction fun ms) = maybe (thrd $ head ms) pf fun where
       thrd (_,_,m) = m
-      pf f 
+      pf f
        | isAqFun f = "% fail \"Can not parse anti-quoted expressions\""
-       | otherwise 
+       | otherwise
          = f++" "++unwords ["("++(if b then "reverse $ " else "")++m1++")"|(b,c,m1) <- ms]
-    
+
 
 
 prRuleQ :: Loc -> Rul -> String
 prRuleQ _ (_,[])           = ""
-prRuleQ m (nt,((rul,p,a):ls))  = 
+prRuleQ m (nt,((rul,p,a):ls))  =
   unwords [qqCat nt, ":" , prPatternQ (isAqAction a) p, "{", prActionQ rul a, "}", "\n" ++ pr ls] ++ "\n"
-  where 
+  where
     pr [] = []
-    pr ((rulx,p,a):ls) = 
+    pr ((rulx,p,a):ls) =
       unlines [(concat $ intersperse " " ["  |", prPatternQ (isAqAction a) p, "{", prActionQ rulx a , "}"])] ++ pr ls where
     prActionQ :: Rule -> Action -> String
     prActionQ rulz (MkAction fun []) = maybe "" pf fun where
           pf f = appEPAll ++" \"" ++ f++"\" []"
     prActionQ rulz (MkAction fun ms) = maybe (thrd $ head ms) pf fun where
             thrd (_,_,m) = m
-            pf f 
+            pf f
               | isAqFun f = fun ++ " " ++ unwords (map (\(b,c,m) -> if b then "(reverse "++m++")" else m) ms)
               | isTokenRule rulz = fromToken ++ "\""++f++"\" $1"
               | otherwise       = constr++" ["++
                  (concat $ intersperse "," [m1|(_,c,m1) <- ms])
-                 ++ "]"       
-              where 
+                 ++ "]"
+              where
                 fun = case tail f of
                   [] | isTokenRule rulz -> "stringAq"
                      | otherwise        -> "printAq"
@@ -227,8 +227,8 @@ prRuleQ m (nt,((rul,p,a):ls))  =
                   "flip (:)" -> appEPAllL
                   "(:)"      -> appEPAll ++"\":\" "
                   "(:[])"    -> appEPAllL
-                  _          -> appEPAll ++"\""++f++"\" "       
-          
+                  _          -> appEPAll ++"\""++f++"\" "
+
 
 
 isAqAction (MkAction mf _) = maybe False isAqFun mf
@@ -244,11 +244,11 @@ finalize l cf = unlines $
    [
      "{",
      "\nhappyError :: [" ++ tokenName ++ "] -> ParseMonad a",
-     "happyError ts =", 
+     "happyError ts =",
      "  fail $ \"syntax error at \" ++ tokenPos ts ++ ",
      "  case ts of",
      "    [] -> []",
-     "    [Err _] -> \" due to lexer error\"", 
+     "    [Err _] -> \" due to lexer error\"",
      "    _ -> \" before \" ++ unwords (map prToken (take 4 ts))",
      "",
      "myLexer = " ++ (if hasLayout cf then "resolveLayout True . " else "") ++ "tokens",
@@ -259,21 +259,21 @@ finalize l cf = unlines $
 
 definedRules ((ps,_),_) = [ mkDef f xs e | FunDef f xs e <- ps ]
     where
-	mkDef f xs e = unwords $ (f ++ "_") : xs' ++ ["=", show e']
-	    where
-		xs' = map (++"_") xs
-		e'  = underscore e
-	underscore (App x es)
-	    | isLower $ head x	= App (x ++ "_") $ map underscore es
-	    | otherwise		= App x $ map underscore es
-	underscore e	      = e
+        mkDef f xs e = unwords $ (f ++ "_") : xs' ++ ["=", show e']
+            where
+                xs' = map (++"_") xs
+                e'  = underscore e
+        underscore (App x es)
+            | isLower $ head x  = App (x ++ "_") $ map underscore es
+            | otherwise         = App x $ map underscore es
+        underscore e          = e
 
 
 specialToks :: CF -> String
 specialToks cf = unlines $
-		 (map aux (literals cf))
-		  ++ ["L_err    { _ }"]
- where aux cat = 
+                 (map aux (literals cf))
+                  ++ ["L_err    { _ }"]
+ where aux cat =
         case cat of
           "Ident"  -> "L_ident  { PT _ (TV $$) }"
           "String" -> "L_quoted { PT _ (TL $$) }"
@@ -287,7 +287,7 @@ specialToks cf = unlines $
 specialRules :: Loc -> CF -> String
 specialRules l cf = unlines $
                   map aux (typed_literals cf)
- where 
+ where
    -- m = loc_module l
    aux (fun,cat) =
      case cat of
@@ -297,7 +297,7 @@ specialRules l cf = unlines $
         , "QQ_Ident :: { BNFC_QQType }   : L_ident  { "++fromToken ++"\"Ident\" $1 }"
         ] ++ aqrule "Ident"
       "String"  -> unlines
-        [ "String  :: { String }  : L_quoted { $1 }" 
+        [ "String  :: { String }  : L_quoted { $1 }"
         , "QQ_String :: { BNFC_QQType }"
         , "QQ_String : L_quoted  { fromString myLocation $1 }"
         ] ++ aqrule "String"
@@ -327,12 +327,10 @@ specialRules l cf = unlines $
          posn = if isPositionCat cf cat then "mkPosToken " else ""
          fromToken' = if isPositionCat cf cat then fromPositionToken else fromToken
          isPos = isPositionCat cf cat
-   aqrule = maybe (const "") rule $ aqSyntax cf 
+   aqrule = maybe (const "") rule $ aqSyntax cf
    rule (b,i,a) = twoRules where
-     open     = "'"++b++"' " ++ body 
+     open     = "'"++b++"' " ++ body
      closed t = "'"++b++t++"' " ++ body
      body     = "AqToken { global_aq $2 } "
      twoRules typ = "\n  | "++ open ++ "\n  | " ++ closed typ
-
-
 

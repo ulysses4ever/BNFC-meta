@@ -27,7 +27,7 @@ import Language.LBNF.CF
 
 
 absRules :: CF -> Q [Dec]
-absRules cf0 = sequence $ 
+absRules cf0 = sequence $
   map (prData $ mkDerivClause $ map mkName $ derivations cf0) $ cf2data cf0
   where
     mkDerivClause :: [Name] -> [Q DerivClause]
@@ -35,7 +35,7 @@ absRules cf0 = sequence $
 
 
 absTokens :: CF -> Q [Dec]
-absTokens cf0 = sequence $ 
+absTokens cf0 = sequence $
   map (prSpecialData (mkDerivClause $ map mkName $ derivations cf0) cf0) (specialCats cf0)
   where
     mkDerivClause :: [Name] -> [DerivClause]
@@ -45,9 +45,9 @@ absTokens cf0 = sequence $
 fixname :: String -> TypeQ
 fixname ('[':xs) = appT listT $ conT $ mkName $ init xs
 fixname xs = conT $ mkName xs
-  
+
 prData :: [DerivClauseQ] -> Data -> Q Dec
-prData deriv (cat,rules) = 
+prData deriv (cat,rules) =
   dataD (return []) (mkName cat) [] Nothing (map cons rules) deriv where
     cons (fun,cats) = normalC (mkName fun) $ either (map typ) (const str) cats
     typ = strictType notStrict . fixname
@@ -61,19 +61,19 @@ prSpecialData deriv cf cat = do
       typ = strictType notStrict $ contentSpec cf cat
   ctxt1 <- (return [])
   con1  <- con
-  return (NewtypeD ctxt1 (mkName cat) [] Nothing con1 deriv)  
+  return (NewtypeD ctxt1 (mkName cat) [] Nothing con1 deriv)
 -- got rid of newtypeD by replacing it with its definition in 2.10.0.0, and then
 -- forcing the parameters of NewtypeD to match up with the new types in 2.12.0.0
 
 
 contentSpec :: CF -> Cat -> Q Type
-contentSpec cf cat = if isPositionCat cf cat 
-  then [t|((Int,Int),String)|] 
+contentSpec cf cat = if isPositionCat cf cat
+  then [t|((Int,Int),String)|]
   else [t|String|]
 
 
 -- aqName :: Bool -> String -> Name
--- aqName False s = 
+-- aqName False s =
 
 
 -- transl cf = return []
