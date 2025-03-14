@@ -1,23 +1,35 @@
 name: CI
 on: push
-jobs:
-  build:
-    strategy:
-      matrix:
-        ghc: ["9.8.2", "9.6.4", "9.4.8", "9.2.8", "8.10.7"]
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Select GHC, update cabal
-        run: |
-          ghcup upgrade
-          ghcup config set cache true
-          ghcup install ghc --set ${{ matrix.ghc }}
-          ghcup install cabal --set latest
-          ghc --version
-          cabal --version
 
-      - uses: actions/checkout@v3
+jobs:
+  generate-matrix:
+    name: "Generate matrix from cabal"
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract the tested GHC versions
+        id: set-matrix
+        uses: kleidukos/get-tested@0.1.7.1
+        with:
+          cabal-file: BNFC-meta/BNFC-meta.cabal
+          ubuntu-version: "latest"
+          version: 0.1.7.1
+
+  build:
+    name: ${{ matrix.ghc }} on ${{ matrix.os }}
+    needs: generate-matrix
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Setup Haskell
+        uses: actions/setup-haskell@latest
+        with:
+          ghc-version: ${{ matrix.ghc }}
+          cabal-version: "latest"
+
+      - uses: actions/checkout@latest
       - name: Build All
         run: |
           cabal update
