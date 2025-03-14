@@ -1,5 +1,6 @@
 name: CI
 on: push
+
 jobs:
   build:
     strategy:
@@ -20,3 +21,17 @@ jobs:
           cabal configure --enable-tests
           cabal build all
           cabal test all
+
+  # This allows us to have a branch protection rule for builds with a matrix
+  # https://github.com/orgs/community/discussions/4324#discussioncomment-3367568
+  post-build:
+    runs-on: ubuntu-latest
+    needs: [ build ]
+    if: always()
+    steps:
+      - name: Successful build
+        if: ${{ !(contains(needs.*.result, 'failure')) }}
+        run: exit 0
+      - name: Failing build
+        if: ${{ contains(needs.*.result, 'failure') }}
+        run: exit 1
