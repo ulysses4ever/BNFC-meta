@@ -1,2 +1,2 @@
 packages: BNFC-meta alex-meta happy-meta
-
+tests: True

@@ -70,3 +70,30 @@ Library
     , Language.LBNF.TypeChecker
     , Language.LBNF.Utils
     , Language.Haskell.TH.Hide
+
+test-suite tests
+  type:                exitcode-stdio-1.0
+  main-is:             Tests.hs
+  hs-source-dirs:      test
+  other-modules:       Grammars.Arithmetic
+                     , Grammars.CMinusMinus
+                     , Grammars.JSON
+                     , Grammars.LabelledBNF
+                     , Grammars.Lambda
+                     , Grammars.GenCode
+                     , Instances
+  build-depends:       base
+                     , tasty
+                     , tasty-hunit
+                     , tasty-quickcheck
+                     , QuickCheck
+                     , generic-arbitrary
+                     , BNFC-meta
+                     , filepath
+                     , directory
+                     , process
+                     , template-haskell >=2.12 && < 3
+  ghc-options: -fconstraint-solver-iterations=10
+
+  
+
