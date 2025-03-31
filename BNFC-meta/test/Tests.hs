@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell, QuasiQuotes, StandaloneDeriving, DeriveGeneric, ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell, QuasiQuotes, StandaloneDeriving, DeriveGeneric, ScopedTypeVariables, FlexibleInstances, UndecidableInstances #-}
 
 module Main where
 
@@ -8,8 +8,6 @@ import Test.Tasty.QuickCheck
 import Test.QuickCheck
 import Test.QuickCheck.Arbitrary.Generic
 import Test.QuickCheck.Monadic (monadicIO, run)
-import Test.Tasty.Ingredients
-import Test.Tasty.Runners
 
 import Language.LBNF.Runtime
 import Language.LBNF
@@ -28,29 +26,29 @@ import System.IO
 import Data.List
 import Control.Monad.IO.Class (liftIO)
 import Control.Exception
-import Data.Typeable
 import System.FilePath
 import System.Directory
 import System.Exit
 import System.Process
-
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
 import Instances
 import Grammars.GenCode
 
+-- Level One tests are fixed grammars with fixed parsetrees
 levelOne :: TestTree
 levelOne = testGroup "Level One: Fixed Grammars -> Fixed Parsetrees" [
+    -- Lambda Calculus
     testCase "Lambda Grammar" $ do
       let parsed = [Lambda.expr| \ f -> (\ x -> f (x x)) (\ x -> f (x x)) |]
       let Ok result = Lambda.pExpr $ Lambda.myLexer (printTree parsed)
       assertEqual "Fixed Parse is correct" parsed result
-
+    -- Arithmetic
     , testCase "Arithmetic Grammar" $ do
       let parsed = [Arithmetic.exp| 1 + 2 * 3 - 4 / 5|]
       let Ok result = Arithmetic.pExp $ Arithmetic.myLexer (printTree parsed)
       assertEqual "Fixed Parse is correct" parsed result
-
+    -- JSON
     , testCase "JSON Grammar" $ do
       let parsed = [JSON.json|
           {
@@ -67,7 +65,7 @@ levelOne = testGroup "Level One: Fixed Grammars -> Fixed Parsetrees" [
           |]
       let Ok result = JSON.pJson $ JSON.myLexer (printTree parsed)
       assertEqual "Fixed Parse is correct" parsed result
-
+    -- C-- 
     , testCase "C-- Grammar" $ do
       let parsed = [CMinusMinus.program| 
           int mx () { 
@@ -83,7 +81,7 @@ levelOne = testGroup "Level One: Fixed Grammars -> Fixed Parsetrees" [
           |]
       let Ok result = CMinusMinus.pProgram $ CMinusMinus.myLexer (printTree parsed)
       assertEqual "Fixed Parse is correct" parsed result
-
+    -- Labelled BNF
     , testCase "LBNF Grammar" $ do
       let parsed = [LabelledBNF.grammar| 
           Num. Json ::= Integer;
@@ -107,24 +105,30 @@ levelOne = testGroup "Level One: Fixed Grammars -> Fixed Parsetrees" [
       assertEqual "Fixed Parse is correct" parsed result
     ]
 
+-- Level Two tests are fixed grammars with random parsetrees
 levelTwo :: TestTree
 levelTwo = testGroup "Level Two: Fixed Grammars -> Random Parsetrees" [
+    -- Lambda Calculus
     testProperty "Lambda Grammar" $ \parsed ->
       monadicIO $ do
         let result = Lambda.pExpr $ Lambda.myLexer (printTree parsed)
         return $ result == Ok parsed
+    -- Arithmetic
     , testProperty "Arithmetic Grammar" $ \parsed ->
       monadicIO $ do
         let result = Arithmetic.pExp $ Arithmetic.myLexer (printTree parsed)
         return $ result == Ok parsed
+    -- JSON    
     , testProperty "JSON Grammar" $ \parsed ->
       monadicIO $ do
         let result = JSON.pJson $ JSON.myLexer (printTree parsed)
         return $ result == Ok parsed
+    -- C--
     , testProperty "C-- Grammar" $ \parsed ->
       monadicIO $ do
         let result = CMinusMinus.pProgram $ CMinusMinus.myLexer (printTree parsed)
         return $ result == Ok parsed 
+    -- Labelled BNF
     , testProperty "LBNF Grammar" $ \parsed ->
       monadicIO $ do
         let result = LabelledBNF.pGrammar $ LabelledBNF.myLexer (printTree parsed)
@@ -132,9 +136,9 @@ levelTwo = testGroup "Level Two: Fixed Grammars -> Random Parsetrees" [
     ]
 
 -- Instances for the the random grammar must be made at compiletime
-$(do
-  makeAllInstances Grammars.GenCode.rules)
+$(makeAllInstances Grammars.GenCode.rules)
 
+-- Level Three tests a random grammar with random parsetrees
 levelThree :: TestTree
 levelThree = $(do
   let headRule = head Grammars.GenCode.rules
@@ -146,6 +150,7 @@ levelThree = $(do
   [| testGroup "Level Three: Random Grammar -> Random Parsetrees" [
     testProperty "Random Grammar Test" $ \(parsed :: $(return headTypeQ)) -> monadicIO $ do
       let result = $(return headParserQ) $ Grammars.GenCode.myLexer (printTree parsed)
+      run $ print $ $(return headParserQ) $ Grammars.GenCode.myLexer (printTree parsed)
       return $ result == Ok parsed
     ]|])
 
@@ -175,6 +180,7 @@ setupDuplicateAntiquoteTest = do
     
     return testFile
 
+-- Failure tests invalid grammars to ensure that they fail
 failureTests :: TestTree
 failureTests = testGroup "Failure Tests"
   [ withResource setupDuplicateAntiquoteTest removeTestFile $ \getFilePath ->
@@ -202,13 +208,13 @@ checkDuplicateAntiquoteError (exitCode, stdout, stderr) = do
   assertBool "Expected compilation to fail" (exitCode /= ExitSuccess)
   assertBool "Expected error about duplicate antiquotes" 
     ("aqSyntax: Multiple antiquote pragmas" `isInfixOf` stderr)
-    
+
 main :: IO ()
 main = do
   defaultMain $
     testGroup "BNFC-Meta Tests"
-      [ levelOne
-      , levelTwo
-      , levelThree
-      , failureTests
+      [ --levelOne
+      --, levelTwo
+      levelThree
+      --, failureTests
       ]

@@ -98,6 +98,7 @@ arbitraryMember n = JSON.MMember <$> arbitrary <*> arbitraryJson (n `div` 2)
 genOptionalSingleton :: Gen a -> Gen [a]
 genOptionalSingleton gen = oneof [pure [], (:[]) <$> gen]
 
+-- Generates a safe string for CMinusMinus
 genSafeString :: Gen String
 genSafeString = listOf1 $ elements (['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ "_")
 
@@ -187,6 +188,7 @@ instance Arbitrary CMinusMinus.Ident where
     restChars <- listOf (elements (['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ "_"))
     return (CMinusMinus.Ident (ensureValidIdent (firstChar : restChars)))
 
+-- Modifies identifiers to avoid conflicts with keywords
 ensureValidIdent :: String -> String
 ensureValidIdent ident
   | ident == "int" || ident == "double" = "X" ++ ident
@@ -324,100 +326,113 @@ instance Arbitrary LabelledBNF.Ident where
     restChars <- listOf (elements (['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ "_"))
     return (LabelledBNF.Ident (ensureValidIdent2 (firstChar : restChars)))
 
+-- Modifies identifiers to avoid conflicts with keywords
 ensureValidIdent2 :: String -> String
 ensureValidIdent2 ident
   | ident `elem` ["comment", "internal", "token", "position", "entrypoints", "separator", "terminator", "coercions", "rules", "layout"] = 'X' : ident
   | otherwise = ident
 
+-- Generates a safe string for LabelledBNF
 genSafeString2 :: Gen String
 genSafeString2 = do
   str <- listOf1 $ elements (['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ "_")
   return $ ensureValidString str
 
+-- Modifies strings to avoid conflicts with keywords
 ensureValidString :: String -> String
 ensureValidString str
   | str `elem` ["stop", "toplevel"] = 'X' : str
   | otherwise = map (\c -> if c == '\\' then 'x' else c) str
 
 
--- Level 3 
+-- Level 3 - Generates a random grammar
 deriving instance Generic Language.LBNF.Grammar.Ident
 
 instance Arbitrary Language.LBNF.Grammar.Ident where
   arbitrary = do
-    firstChar <- elements (['A'..'Z'])
+    firstChar <- elements ['A'..'Z']
     restChars <- listOf (elements (['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ "_"))
-    return (Language.LBNF.Grammar.Ident (ensureValidIdent2 (firstChar : restChars)))
+    lastChar <- elements (['a'..'z'] ++ ['A'..'Z'] ++ "_")
+    return (Language.LBNF.Grammar.Ident (ensureValidIdent2 (firstChar : restChars ++ [lastChar])))
 
+-- Generates a list of non-terminals for the grammar
 getNonTerms :: Int -> Gen [Language.LBNF.Grammar.Ident]
-getNonTerms n = vectorOf n arbitrary
+getNonTerms n = vectorOf (n + 1) arbitrary
 
 deriving instance Generic Language.LBNF.Grammar.Def
 
+-- Generates the rules for the grammar based on the non-terminals
 genRules :: [Language.LBNF.Grammar.Ident] -> Gen [Language.LBNF.Grammar.Def]
 genRules idents =
-  let rules = concat <$> zipWithM genRule (tails idents) idents
-      listRules = mapM genSeparator idents
-  in (++) <$> rules <*> listRules
+  let listIdent = last idents
+      rules = concat <$> zipWithM genRule [(filter (/= listIdent) x, listIdent) | x <- tail (tails idents) ++ [[]]] idents
+      listRules = (:[]) <$> genSeparator listIdent idents
+  in (++) <$> rules <*> listRules 
 
-genRule :: [Language.LBNF.Grammar.Ident] -> Language.LBNF.Grammar.Ident -> Gen [Language.LBNF.Grammar.Def]
-genRule idents ident =
+-- Generates a single rule for the grammar
+genRule :: ([Language.LBNF.Grammar.Ident], Language.LBNF.Grammar.Ident) -> Language.LBNF.Grammar.Ident -> Gen [Language.LBNF.Grammar.Def]
+genRule (idents, listIdent) ident =
   let numLabels = choose (0, 4)
+      labelledRules = if null idents 
+              then pure [] 
+              else numLabels >>= \n -> vectorOf n labelledRule
       labelledRule = Language.LBNF.Grammar.Rule <$> arbitrary
-                                                   <*> pure (Language.LBNF.Grammar.IdCat ident)
-                                                   <*> (Language.LBNF.Grammar.RHS <$> genRHS idents)
-      labelledRules = numLabels >>= \n -> vectorOf n labelledRule
+                     <*> pure (Language.LBNF.Grammar.IdCat ident)
+                     <*> (Language.LBNF.Grammar.RHS <$> genRHS idents listIdent (ident == listIdent))
       terminalRule = Language.LBNF.Grammar.Rule <$> arbitrary
                                                    <*> pure (Language.LBNF.Grammar.IdCat ident)
-                                                   <*> (Language.LBNF.Grammar.RHS <$> genTerminals)
+                                                   <*> (Language.LBNF.Grammar.RHS <$> genTerminals idents)
   in (:) <$> terminalRule <*> labelledRules
 
-genTerminals :: Gen [Language.LBNF.Grammar.Item]
-genTerminals =
+-- Generates a safe string for terminals
+genSafeString3 :: [Language.LBNF.Grammar.Ident] -> Gen String
+genSafeString3 idents = listOf1 (elements (['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ "_"))
+    `suchThat` (\str -> not (any (isPartOf str) idents))
+  where
+    isPartOf :: String -> Language.LBNF.Grammar.Ident -> Bool
+    isPartOf str (Language.LBNF.Grammar.Ident identStr) = str `isPrefixOf` identStr || str `isSuffixOf` identStr || str `isInfixOf` identStr
+
+-- Generates a list of terminals
+genTerminals :: [Language.LBNF.Grammar.Ident] -> Gen [Language.LBNF.Grammar.Item]
+genTerminals idents =
   choose (1, 5) >>= \numTerms ->
-    vectorOf numTerms $ Language.LBNF.Grammar.Terminal <$> genSafeString
+    vectorOf numTerms $ Language.LBNF.Grammar.Terminal <$> genSafeString3 idents
 
-genRHS :: [Language.LBNF.Grammar.Ident] -> Gen [Language.LBNF.Grammar.Item]
-genRHS idents =
-  choose (1, 5) >>= \numItems ->
-    vectorOf numItems $ frequency
-      [ (6, Language.LBNF.Grammar.Terminal <$> genSafeString)
-      , (3, Language.LBNF.Grammar.NTerminal . Language.LBNF.Grammar.IdCat <$> elements idents)
-      , (1, Language.LBNF.Grammar.NTerminal . Language.LBNF.Grammar.ListCat . Language.LBNF.Grammar.IdCat <$> elements idents)
-      ]
+-- Inserts an optional list at a random index in the list of items
+insertOptionalItem :: Language.LBNF.Grammar.Item -> Bool -> [Language.LBNF.Grammar.Item] -> Gen [Language.LBNF.Grammar.Item]
+insertOptionalItem optionalItem isList generatedList = do
+  shouldInsert <- frequency [(if isList then 0 else 1, pure True), (9, pure False)] 
+  if shouldInsert 
+    then do
+      randomIndex <- choose (0, length generatedList)
+      let (before, after) = splitAt randomIndex generatedList
+      return $ before ++ [optionalItem] ++ after
+    else return generatedList
 
-genListRules :: Language.LBNF.Grammar.Ident -> [Language.LBNF.Grammar.Def]
-genListRules ident =
-  [ Language.LBNF.Grammar.Rule Language.LBNF.Grammar.ListE
-                               (Language.LBNF.Grammar.ListCat (Language.LBNF.Grammar.IdCat ident))
-                               (Language.LBNF.Grammar.RHS [])
-  , Language.LBNF.Grammar.Rule Language.LBNF.Grammar.ListOne
-                               (Language.LBNF.Grammar.ListCat (Language.LBNF.Grammar.IdCat ident))
-                               (Language.LBNF.Grammar.RHS
-                                  [
-                                    Language.LBNF.Grammar.NTerminal (Language.LBNF.Grammar.IdCat ident)
-                                  ]
-                               )
-  , Language.LBNF.Grammar.Rule Language.LBNF.Grammar.ListCons
-                               (Language.LBNF.Grammar.ListCat (Language.LBNF.Grammar.IdCat ident))
-                               (Language.LBNF.Grammar.RHS
-                                  [ Language.LBNF.Grammar.NTerminal (Language.LBNF.Grammar.IdCat ident)
-                                  , Language.LBNF.Grammar.NTerminal (Language.LBNF.Grammar.ListCat (Language.LBNF.Grammar.IdCat ident))
-                                  ]
-                               )
-  ]
+-- Generates the right-hand side of a rule
+-- The right-hand side consists of non-terminals, terminals and optionally a list of non-terminals
+genRHS :: [Language.LBNF.Grammar.Ident] -> Language.LBNF.Grammar.Ident -> Bool -> Gen [Language.LBNF.Grammar.Item]
+genRHS idents ident isList = do
+    numItems <- choose (1, 5)
+    baseList <- vectorOf numItems $ frequency
+        [ (2, Language.LBNF.Grammar.Terminal <$> genSafeString3 idents)
+        , (1, Language.LBNF.Grammar.NTerminal . Language.LBNF.Grammar.IdCat <$> elements idents)
+        ]
+    let optionalItem = (Language.LBNF.Grammar.NTerminal . Language.LBNF.Grammar.ListCat . Language.LBNF.Grammar.IdCat) ident
+    insertOptionalItem optionalItem isList (nub baseList)
 
-genSeparator ::Language.LBNF.Grammar.Ident -> Gen Language.LBNF.Grammar.Def
-genSeparator ident =
-  Language.LBNF.Grammar.Separator
+-- Generates a separator rule to handle lists
+genSeparator ::Language.LBNF.Grammar.Ident -> [Language.LBNF.Grammar.Ident] -> Gen Language.LBNF.Grammar.Def
+genSeparator ident idents =
+  pure $ Language.LBNF.Grammar.Separator
     Language.LBNF.Grammar.MNonempty
       (Language.LBNF.Grammar.IdCat ident)
-        <$> genSafeString
+      ","
 
 deriving instance Generic Language.LBNF.Grammar.Grammar
 
 instance Arbitrary Language.LBNF.Grammar.Grammar where
-  arbitrary = Grammar <$> (choose (1, 10) >>= getNonTerms >>= genRules)
+  arbitrary = Grammar <$> (choose (5, 10) >>= getNonTerms >>= genRules)
 
 deriving instance Generic Language.LBNF.Grammar.Label
 
@@ -434,9 +449,11 @@ deriving instance Generic Language.LBNF.Grammar.Item
 instance Arbitrary Language.LBNF.Grammar.Item where
   arbitrary = Language.LBNF.Grammar.Terminal <$> genSafeString
 
+-- Generates a random grammar at compile time
 generateGrammar :: Q Language.LBNF.Grammar.Grammar
 generateGrammar = runIO $ generate (arbitrary :: Gen Language.LBNF.Grammar.Grammar)
 
+-- Gets all the rules in a grammar as strings
 getRules :: Language.LBNF.Grammar.Grammar -> [String]
 getRules (Language.LBNF.Grammar.Grammar defs) =
   nub [str | Language.LBNF.Grammar.Rule _ (Language.LBNF.Grammar.IdCat (Language.LBNF.Grammar.Ident str)) _ <- defs]
@@ -445,35 +462,65 @@ getRules (Language.LBNF.Grammar.Grammar defs) =
 -- Function to generate Generic and Arbitrary instances for a type
 makeInstances :: String -> Q [Dec]
 makeInstances typeName = do
-    Just tyName <- lookupTypeName typeName
-    let ty = conT tyName
+  Just tyName <- lookupTypeName typeName
+  let ty = conT tyName
+  let genericInst = standaloneDerivD (cxt []) (appT (conT ''Generic) ty)
+  info <- reify tyName
+  let TyConI dec = info
+  let DataD _ _ _ _ cons _ = dec
 
-    let genericInst = standaloneDerivD (cxt []) (appT (conT ''Generic) ty)
+  let arbitraryInst =
+        instanceD (cxt [])
+          (appT (conT ''Arbitrary) ty)
+          [ funD 'arbitrary
+              [ clause
+                  []
+                  (normalB [|
+                    sized $ \n ->
+                      oneof $(listE (map generateFromConstructor cons))
+                  |])
+                  []
+              ]
+          ]
 
-    let arbitraryInst = instanceD (cxt []) (appT (conT ''Arbitrary) ty)
-                        [ funD 'arbitrary [clause [] (normalB [| genericArbitrary |]) []]
-                        , funD 'shrink [clause [] (normalB [| genericShrink |]) []]
-                        ]
+  sequence [genericInst, arbitraryInst]
+  where
+    generateFromConstructor :: Con -> Q Language.Haskell.TH.Exp
+    generateFromConstructor (NormalC name bangTypes) =
+      case bangTypes of
+        [] -> [| pure $(conE name) |]
+        [x] -> [| $(conE name) <$> $(genForBangType x) |]
+        xs -> do
+          gens <- mapM genForBangType xs
+          return $
+            foldr1
+              (\a b -> UInfixE a (VarE '(<*>)) b)
+              (UInfixE (ConE name) (VarE '(<$>)) (head gens) :
+               tail gens)
 
-    sequence [genericInst, arbitraryInst]
+    genForBangType :: BangType -> Q Language.Haskell.TH.Exp
+    genForBangType (_, ty) =
+      case ty of
+        ConT _       -> [| resize (n `div` 2) arbitrary |]
+        AppT ListT _ -> [| listOf1 (resize (n `div` 2) arbitrary) |]
+        _            -> [| resize (n `div` 2) arbitrary |]
 
+-- Generates Generic and Arbitrary instances for a list of types
 makeAllInstances :: [String] -> Q [Dec]
 makeAllInstances typeNames = do
     instances <- mapM makeInstances typeNames
     return $ concat instances
 
+-- Gets the type name from a string
 stringToType :: String -> Q Type
 stringToType name = do
     Just typeName <- lookupTypeName name
     conT typeName  
 
+-- Gets the function name from a string
 stringToFunction :: String -> Q Language.Haskell.TH.Exp 
 stringToFunction name = do 
     Just funcName <- lookupValueName name 
     varE funcName
 
-stringToQuoter :: String -> Q Language.Haskell.TH.Exp
-stringToQuoter name = do
-    Just quoterName <- lookupValueName name
-    [| $(varE quoterName) |]
     

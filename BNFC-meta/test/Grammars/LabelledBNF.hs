@@ -5,6 +5,7 @@ module Grammars.LabelledBNF where
 import Language.LBNF.Compiletime
 import Language.LBNF(lbnf, bnfc, dumpCode)
 
+-- Labelled BNF
 bnfc [lbnf|
 -- A Grammar is a sequence of definitions
 

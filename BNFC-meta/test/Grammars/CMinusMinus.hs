@@ -5,6 +5,7 @@ module Grammars.CMinusMinus where
 import Language.LBNF.Compiletime
 import Language.LBNF(lbnf, bnfc, dumpCode)
 
+-- C--
 bnfc [lbnf|
 comment "//" ;
 comment "/*" "*/" ;

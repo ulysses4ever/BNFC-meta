@@ -5,6 +5,7 @@ module Grammars.JSON where
 import Language.LBNF.Compiletime
 import Language.LBNF(lbnf, bnfc, dumpCode)
 
+-- JSON
 bnfc [lbnf|
 Num. Json ::= Integer;
 Stri. Json ::= String ;

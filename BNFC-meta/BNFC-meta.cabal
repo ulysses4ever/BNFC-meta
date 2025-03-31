@@ -96,4 +96,3 @@ test-suite tests
   ghc-options: -fconstraint-solver-iterations=10
 
   
-

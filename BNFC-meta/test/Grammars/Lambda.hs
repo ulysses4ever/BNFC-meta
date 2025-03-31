@@ -5,6 +5,7 @@ module Grammars.Lambda where
 import Language.LBNF.Compiletime
 import Language.LBNF(lbnf, bnfc, dumpCode)
 
+-- Lambda Calculus
 bnfc [lbnf|
 Abs. Expr ::= "\\" Ident "->" Expr ;
 App. Expr1 ::= Expr1 Expr2 ;
