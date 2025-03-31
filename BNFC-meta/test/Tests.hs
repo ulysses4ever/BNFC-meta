@@ -213,8 +213,8 @@ main :: IO ()
 main = do
   defaultMain $
     testGroup "BNFC-Meta Tests"
-      [ --levelOne
-      --, levelTwo
-      levelThree
-      --, failureTests
+      [ levelOne
+      , levelTwo
+      , levelThree
+      , failureTests
       ]
