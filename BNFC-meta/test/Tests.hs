@@ -150,7 +150,6 @@ levelThree = $(do
   [| testGroup "Level Three: Random Grammar -> Random Parsetrees" [
     testProperty "Random Grammar Test" $ \(parsed :: $(return headTypeQ)) -> monadicIO $ do
       let result = $(return headParserQ) $ Grammars.GenCode.myLexer (printTree parsed)
-      run $ print $ $(return headParserQ) $ Grammars.GenCode.myLexer (printTree parsed)
       return $ result == Ok parsed
     ]|])
 
