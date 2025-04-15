@@ -82,16 +82,16 @@ test-suite tests
                      , Grammars.Lambda
                      , Grammars.GenCode
                      , Instances
-  build-depends:       base
-                     , tasty
-                     , tasty-hunit
-                     , tasty-quickcheck
-                     , QuickCheck
-                     , generic-arbitrary
-                     , BNFC-meta
-                     , filepath
-                     , directory
-                     , process
+  build-depends:       base < 5
+                     , tasty >= 1.5 && < 1.6
+                     , tasty-hunit >= 0.10 && < 0.11
+                     , tasty-quickcheck >= 0.11 && < 0.12
+                     , QuickCheck >= 2.14 && < 2.16
+                     , generic-arbitrary >= 1.0 && < 1.1
+                     , BNFC-meta >= 0.6 && < 0.7
+                     , filepath >= 1.5 && < 1.6
+                     , directory >= 1.3 && < 1.4
+                     , process >= 1.6 && < 1.7
                      , template-haskell >=2.12 && < 3
   ghc-options: -fconstraint-solver-iterations=10
 
