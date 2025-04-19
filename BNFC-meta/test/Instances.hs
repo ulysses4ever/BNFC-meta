@@ -418,8 +418,12 @@ genRHS idents ident isList = do
         [ (2, Language.LBNF.Grammar.Terminal <$> genSafeString3 idents)
         , (1, Language.LBNF.Grammar.NTerminal . Language.LBNF.Grammar.IdCat <$> elements idents)
         ]
+    markers <- vectorOf 2 $ genSafeString3 idents
+    let headMarker = Language.LBNF.Grammar.Terminal (head markers)  
+    let tailMarker = Language.LBNF.Grammar.Terminal (last markers) 
     let optionalItem = (Language.LBNF.Grammar.NTerminal . Language.LBNF.Grammar.ListCat . Language.LBNF.Grammar.IdCat) ident
-    insertOptionalItem optionalItem isList (nub baseList)
+    modifiedBase <- insertOptionalItem optionalItem isList (nub baseList)
+    return $ headMarker : modifiedBase ++ [tailMarker]
 
 -- Generates a separator rule to handle lists
 genSeparator ::Language.LBNF.Grammar.Ident -> [Language.LBNF.Grammar.Ident] -> Gen Language.LBNF.Grammar.Def
