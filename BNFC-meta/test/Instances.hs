@@ -330,19 +330,7 @@ instance Arbitrary LabelledBNF.Ident where
 
 -- Modifies identifiers to avoid conflicts with keywords
 ensureValidIdent2 :: String -> String
-ensureValidIdent2 ident
-  | ident `elem` reservedWords = 'X' : ident
-  | ident `elem` bannedIdentifiers = 'X' : ident
-  | otherwise = ident
-  where
-    reservedWords =
-      ["comment", "internal", "token", "position", "entrypoints", "separator",
-       "terminator", "coercions", "rules", "layout"]
-    
-    bannedIdentifiers =
-      ["Pn", "HappyStk", "utf8Encode", "Posn", "AlexInput", "alexGetByte", "ord",
-       "listArray", "(!)", "Array", "printTree", "doc", "Doc", "concatD", "Print",
-       "prPrec", "PrintPlain", "ParseMonad", "err"]
+ensureValidIdent2 ident = "BnfcMetaTest" ++ ident
 
 -- Generates a safe string for LabelledBNF
 genSafeString2 :: Gen String
