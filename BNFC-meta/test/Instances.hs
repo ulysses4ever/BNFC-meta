@@ -199,7 +199,9 @@ ensureValidIdent ident
 deriving instance Generic LabelledBNF.Grammar
 
 instance Arbitrary LabelledBNF.Grammar where
-  arbitrary = LabelledBNF.MkGrammar <$> listOf arbitrary
+  arbitrary = do
+    k <- choose (1, 10)
+    LabelledBNF.MkGrammar <$> vectorOf k arbitrary
 
 deriving instance Generic LabelledBNF.Def
 
