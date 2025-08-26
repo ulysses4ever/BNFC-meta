@@ -7,11 +7,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-test:
+    name: Build and test BNFC-meta
     strategy:
       fail-fast: false
       matrix:
-        ghc: ["9.10.1", "9.8.4", "9.6.6", "9.4.8", "9.2.8" ]
+        ghc: ["9.12.2", "9.10.2", "9.8.4", "9.6.6", "9.4.8", "9.2.8" ]
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -30,9 +31,9 @@ jobs:
 
   # This allows us to have a branch protection rule for builds with a matrix
   # https://github.com/orgs/community/discussions/4324#discussioncomment-3367568
-  post-build:
+  post-build-test:
     runs-on: ubuntu-latest
-    needs: [ build ]
+    needs: [ build-test ]
     if: always()
     steps:
       - name: Successful build
