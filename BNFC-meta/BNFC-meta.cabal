@@ -5,7 +5,7 @@ build-type:     Simple
 license:        GPL-2
 license-file:   LICENSE
 author:             Jonas Duregård
-maintainer:     artem.pelenitsyn@gmail.com
+maintainer:     Artem Pelenitsyn <a@pelenitsyn.top>
 category:           Development, parsing, text, language
 synopsis:           Deriving Parsers and Quasi-Quoters from BNF Grammars
 description:    This package provides a very simple way of defining a compiler
