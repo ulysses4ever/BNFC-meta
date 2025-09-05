@@ -22,13 +22,15 @@ import Language.LBNF.Grammar
 import Prelude hiding (exp)
 import GHC.Generics (Generic)
 import Control.Monad
-import System.IO
 import Data.List
+import Data.Version (makeVersion)
 import Control.Monad.IO.Class (liftIO)
 import Control.Exception
-import System.FilePath
 import System.Directory
 import System.Exit
+import System.FilePath
+import System.IO
+import System.Info (os, compilerVersion)
 import System.Process
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
@@ -182,15 +184,23 @@ setupDuplicateAntiquoteTest = do
 -- Failure tests invalid grammars to ensure that they fail
 failureTests :: TestTree
 failureTests = testGroup "Failure Tests"
-  [ withResource setupDuplicateAntiquoteTest removeTestFile $ \getFilePath ->
-      testCase "Duplicate antiquote fails" $ do
-        filePath <- getFilePath
-        result <- readProcessWithExitCode
-          "cabal"
-          ["exec", "ghc", "--", filePath]
-          ""
-        checkDuplicateAntiquoteError result
+  [
+    duplicateAntiquoteTest
   ]
+
+duplicateAntiquoteTest
+  | os == "mingw32" &&
+    compilerVersion `elem` [ makeVersion [9,2], makeVersion [9,4] ]
+      = testCase "Duplicate antiquote test skipped on Windows (https://github.com/ulysses4ever/BNFC-meta/issues/16)" $ return ()
+  | otherwise
+      = withResource setupDuplicateAntiquoteTest removeTestFile $ \getFilePath ->
+        testCase "Duplicate antiquote fails" $ do
+          filePath <- getFilePath
+          result <- readProcessWithExitCode
+            "cabal"
+            ["exec", "ghc", "--", filePath]
+            ""
+          checkDuplicateAntiquoteError result
 
 -- Helper to remove the test file after the test
 removeTestFile :: FilePath -> IO ()
